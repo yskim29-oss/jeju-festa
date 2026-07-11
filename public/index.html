@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#DEF24E">
+<title>제주 축제 도장 · Jeju Festa</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i-arrow"><path d="M5 12h14M13 6l6 6-6 6"/></g>
+<g id="i-arrow-ur"><path d="M7 17 17 7M8 7h9v9"/></g>
+<g id="i-caret"><path d="m6 9 6 6 6-6"/></g>
+<g id="i-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></g>
+<g id="i-pin"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></g>
+<g id="i-medal"><circle cx="12" cy="14" r="6"/><path d="M9 9 6.5 3M15 9l2.5-6M10.5 14l1 1 2-2.5"/></g>
+<g id="i-leaf"><path d="M4 20c0-9 7-15 16-15 0 9-6 15-15 15zM4 20c3-5 6-8 11-10"/></g>
+<g id="i-clock"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g>
+<g id="i-check"><path d="M20 6.5 9.5 17 4 11.5"/></g>
+<g id="i-star"><path d="m12 3 2.6 5.6 6 .7-4.5 4.2 1.2 6L12 16.9 6.7 19.5l1.2-6L3.4 9.3l6-.7L12 3z"/></g>
+<g id="i-qr"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2h-2zM18 14h2M20 16v4M14 18v2M17 20h3"/></g>
+<g id="i-target"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></g>
+<g id="i-camera"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-2h7l1 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.2"/></g>
+<g id="i-upload"><path d="M12 16V4M8 8l4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></g>
+<g id="i-gift"><rect x="3.5" y="9" width="17" height="12" rx="2"/><path d="M3.5 13h17M12 9v12M12 9S9.5 3.5 7 5.5 9 9 12 9zM12 9s2.5-5.5 5-3.5S15 9 12 9z"/></g>
+<g id="i-logout"><path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M15 12H5"/></g>
+<g id="i-menu"><path d="M4 7h16M4 12h16M4 17h16"/></g>
+<g id="i-sun"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></g>
+</defs></svg>
+
+<!-- ============ AUTH ============ -->
+<div id="auth">
+  <div class="aside">
+    <div class="logo"><span class="mk">제</span><span>제주 축제 도장</span></div>
+    <img class="abadge ab1" alt="" src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=300&q=60" onerror="this.style.display='none'">
+    <img class="abadge ab2" alt="" src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=300&q=60" onerror="this.style.display='none'">
+    <div>
+      <h1 data-t="ob_title"></h1>
+      <p class="tagline" data-t="ob_desc"></p>
+      <div class="amembers">
+        <div class="avatars"><span>🐬</span><span>🏄</span><span>🧗</span><span>🌴</span></div>
+        <small style="font-weight:700" data-t="members"></small>
+      </div>
+    </div>
+  </div>
+  <div class="apanel">
+    <div class="authcard">
+      <h2 id="authTitle"></h2>
+      <p class="lead" id="authLead"></p>
+      <div class="autherr" id="authErr"></div>
+      <div id="signupExtra">
+        <div class="field"><label data-t="f_name"></label><input id="inName" maxlength="12" autocomplete="nickname"></div>
+        <div class="field"><label data-t="f_avatar"></label><div class="avatarpick" id="avatarPick"></div></div>
+      </div>
+      <div class="field"><label data-t="f_email"></label><input id="inEmail" type="email" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label data-t="f_pw"></label><input id="inPw" type="password" autocomplete="current-password"></div>
+      <button class="btn btn-dark authbtn" id="authBtn"></button>
+      <div class="authswitch"><span id="switchTxt"></span> <button id="switchBtn"></button></div>
+      <div class="demohint"><span data-t="demo_hint"></span> <button id="demoBtn" data-t="demo_btn"></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="wrap">
+      <div class="nav">
+        <div class="logo"><span class="mk">제</span><span class="hide-sm">Jeju Festa</span></div>
+        <div class="navlinks" id="navlinks">
+          <button data-nav="home" data-t="nav_home"></button>
+          <button data-nav="map" data-t="nav_map"></button>
+          <button data-nav="search" data-t="nav_search"></button>
+          <button data-nav="my" data-t="nav_my"></button>
+          <button data-nav="rank" data-t="nav_rank"></button>
+        </div>
+        <div class="navgrow"></div>
+        <div class="navright">
+          <div class="pts"><svg class="icon" style="width:16px;height:16px" viewBox="0 0 24 24"><use href="#i-medal"/></svg><span id="hdrPts">0</span></div>
+          <div class="lang">
+            <button id="langKo" onclick="setLang('ko')">KO</button>
+            <button id="langEn" onclick="setLang('en')">EN</button>
+          </div>
+          <button class="iconbtn plain menubtn" onclick="cycleNav()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ===== HOME ===== -->
+    <section id="v-home" class="view on">
+      <div class="hero">
+        <div class="hero-lime">
+          <span class="eyebrow" data-t="hero_eyebrow"></span>
+          <h1 id="heroH1"></h1>
+          <form class="subscribe" onsubmit="return subscribe(event,this)">
+            <input type="email" data-tph="hero_email" required>
+            <button class="btn btn-dark btn-sm" type="submit"><span data-t="subscribe"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          </form>
+          <div class="members">
+            <div class="avatars"><span>🐬</span><span>🏄</span><span>🧗</span></div>
+            <small data-t="members"></small>
+          </div>
+        </div>
+        <div class="hero-photo">
+          <img alt="Jeju" src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1000&q=60" onerror="this.style.display='none'">
+          <div class="ov"></div>
+          <div class="chipcard" style="left:16px;top:16px"><span style="font-size:20px">🌊</span><span data-t="hero_chip"></span></div>
+          <div class="ftag" style="right:20px;top:80px"><span class="dot"></span>GHG Emissions</div>
+          <div class="ftag" style="left:34%;top:150px"><span class="dot"></span><span data-t="tag_ocean"></span></div>
+          <div class="ftag" style="right:26%;top:240px"><span class="dot"></span><span data-t="tag_forest"></span></div>
+          <div class="social"><svg class="icon" style="width:15px;height:15px" viewBox="0 0 24 24"><use href="#i-leaf"/></svg><span data-t="hero_social"></span></div>
+          <div class="hero-cap" data-t="hero_cap"></div>
+        </div>
+      </div>
+
+      <div class="greener">
+        <img class="floatimg f1" alt="" src="https://images.unsplash.com/photo-1505142468610-359e7d316be0?auto=format&fit=crop&w=200&q=60" onerror="this.style.visibility='hidden'">
+        <img class="floatimg f2" alt="" src="https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=200&q=60" onerror="this.style.visibility='hidden'">
+        <img class="floatimg f3" alt="" src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=200&q=60" onerror="this.style.visibility='hidden'">
+        <img class="floatimg f4" alt="" src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=200&q=60" onerror="this.style.visibility='hidden'">
+        <h2 data-t="greener_title"></h2>
+        <p data-t="greener_sub"></p>
+        <div class="cta">
+          <button class="btn btn-dark" onclick="go('map')"><span data-t="view_map"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          <button class="btn btn-ghost" onclick="go('search')"><span data-t="learn_more"></span></button>
+        </div>
+      </div>
+
+      <div class="protect">
+        <div class="pblock word" data-t="p_we"></div>
+        <div class="pblock img"><img alt="" src="https://images.unsplash.com/photo-1517783999520-f068d7431a60?auto=format&fit=crop&w=600&q=60" onerror="this.style.display='none'"><span data-t="p_protect"></span></div>
+        <div class="pblock arrow"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+        <div class="pblock img"><img alt="" src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=600&q=60" onerror="this.style.display='none'"><span data-t="p_nature"></span></div>
+      </div>
+
+      <div class="sec-head">
+        <h2 data-t="inits_title"></h2>
+        <p data-t="inits_sub"></p>
+      </div>
+      <div class="controls">
+        <div class="monthnav">
+          <button onclick="shiftMonth(-1)" aria-label="prev">‹</button>
+          <span class="lbl" id="monthLbl"></span>
+          <button onclick="shiftMonth(1)" aria-label="next">›</button>
+        </div>
+        <div id="catFilters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div class="selectw">
+          <select id="sortSel" onchange="setSort(this.value)"></select>
+          <svg class="icon cc" viewBox="0 0 24 24"><use href="#i-caret"/></svg>
+        </div>
+      </div>
+      <div class="inits">
+        <div class="init-head">
+          <div data-t="col_title"></div><div data-t="col_tags"></div><div data-t="col_date"></div><div></div>
+        </div>
+        <div id="initList"></div>
+      </div>
+
+      <div class="sec-head">
+        <h2 data-t="problems_title"></h2>
+        <p data-t="problems_sub"></p>
+      </div>
+      <div class="pcards" id="pcards"></div>
+
+      <div class="newsletter">
+        <span class="eyebrow" data-t="newsletter"></span>
+        <div>
+          <h3 data-t="nl_title"></h3>
+          <form class="nl-form" onsubmit="return subscribe(event,this)">
+            <input type="email" data-tph="f_email" required>
+            <button class="btn btn-dark btn-sm" type="submit"><span data-t="subscribe"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>©2026 제주 축제 도장 · All rights reserved</span>
+        <div class="socials"><a>Facebook</a><a>Twitter</a><a>Instagram</a></div>
+      </div>
+    </section>
+
+    <!-- ===== MAP ===== -->
+    <section id="v-map" class="view">
+      <div class="sec-head"><h2 data-t="map_title"></h2><p data-t="map_sub"></p></div>
+      <div class="maplayout">
+        <div id="map"></div>
+        <div class="mapside">
+          <div class="tracker">
+            <h3 data-t="map_slots"></h3>
+            <p data-t="slot_hint"></p>
+            <div class="slots" id="mapSlots"></div>
+            <div class="tprog"><i id="mapProg"></i></div>
+          </div>
+          <div class="maplist" id="mapList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SEARCH ===== -->
+    <section id="v-search" class="view">
+      <div class="sec-head"><h2 data-t="search_title"></h2><p data-t="search_sub"></p></div>
+      <div class="searchfield">
+        <svg class="icon" viewBox="0 0 24 24"><use href="#i-search"/></svg>
+        <input id="searchInput" oninput="renderSearch()">
+      </div>
+      <div class="controls" style="margin-bottom:16px">
+        <div id="searchFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-right:auto"></div>
+        <div class="selectw">
+          <select id="searchSort" onchange="renderSearch()"></select>
+          <svg class="icon cc" viewBox="0 0 24 24"><use href="#i-caret"/></svg>
+        </div>
+      </div>
+      <div class="pcards" id="searchList"></div>
+    </section>
+
+    <!-- ===== MY ===== -->
+    <section id="v-my" class="view">
+      <div class="sec-head"><h2 data-t="my_title"></h2></div>
+      <div class="mygrid">
+        <div class="profile">
+          <div class="pr">
+            <div class="pav" id="myAvatar"></div>
+            <div>
+              <div class="pname" id="myName"></div>
+              <div class="plvl"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><use href="#i-leaf"/></svg><span id="myLevel"></span></div>
+            </div>
+          </div>
+          <div class="prog"><i id="myProg"></i></div>
+          <div class="pmeta"><span id="myProgTxt"></span><span data-t="my_goal"></span></div>
+          <div class="slots light" id="mySlots" style="margin-top:22px"></div>
+        </div>
+        <div class="myright">
+          <div class="sectlabel" style="margin:0 0 4px"><svg class="icon" viewBox="0 0 24 24"><use href="#i-gift"/></svg><span data-t="my_rewards"></span></div>
+          <div id="rewardList"></div>
+          <button class="logoutbtn" id="logoutBtn"><svg class="icon" style="width:16px;height:16px;display:inline;vertical-align:-3px" viewBox="0 0 24 24"><use href="#i-logout"/></svg> <span data-t="logout"></span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== RANK ===== -->
+    <section id="v-rank" class="view">
+      <div class="sec-head"><h2 data-t="rank_title"></h2><p data-t="rank_sub"></p></div>
+      <div id="rankList"></div>
+    </section>
+
+    <!-- ===== DETAIL ===== -->
+    <section id="v-detail" class="view">
+      <button class="back" onclick="go('home')"><svg class="icon" style="width:16px;height:16px" viewBox="0 0 24 24"><use href="#i-caret"/></svg><span data-t="back"></span></button>
+      <div id="detailBody"></div>
+    </section>
+  </main>
+</div>
+
+<!-- check-in sheet -->
+<div class="sheet" id="checkinSheet"><div class="sheet-card" id="sheetCard"></div></div>
+<!-- toast + stamp modal -->
+<div class="toast" id="toast"></div>
+<div class="modal" id="stampModal" onclick="this.classList.remove('show')">
+  <div class="stampcard" onclick="event.stopPropagation()">
+    <div class="big" id="msStamp">🍊</div>
+    <div class="mtag" id="msMethod"></div>
+    <h3 id="msTitle"></h3>
+    <p id="msDesc"></p>
+    <button class="btn btn-lime" onclick="document.getElementById('stampModal').classList.remove('show')" data-t="ms_ok"></button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
