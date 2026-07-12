@@ -119,7 +119,7 @@ let token=localStorage.getItem("jf_token")||null;
 let ME=null, FEST=[], curMonth=2, curYear=2026;
 let catFilter="all", greenOnly=false, sortMode="date";
 let authMode="login", pickedAvatar="🧑‍🌾";
-let map=null, markers=[];
+let map=null, markers=[], mapTiles=null, mapTileLang=null;
 
 /* ================= api ================= */
 async function api(path, opts={}){
@@ -337,12 +337,27 @@ function tipHTML(f){
     </div>
   </div>`;
 }
+function setMapTiles(){
+  if(mapTileLang===lang && mapTiles) return;      // already correct
+  if(mapTiles){ map.removeLayer(mapTiles); mapTiles=null; }
+  const mapEl=document.getElementById("map");
+  if(lang==="ko"){
+    // OpenStreetMap standard tiles render local-language (Korean) place names
+    mapTiles=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19, attribution:'&copy; OpenStreetMap'});
+    mapEl.classList.add("ko-map");
+  }else{
+    mapTiles=L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{
+      subdomains:"abcd", maxZoom:19, attribution:'&copy; OpenStreetMap &copy; CARTO'});
+    mapEl.classList.remove("ko-map");
+  }
+  mapTiles.addTo(map); mapTileLang=lang;
+}
 function renderMap(){
   if(!map){
     map=L.map("map",{scrollWheelZoom:true,zoomControl:true,zoomSnap:.5,wheelPxPerZoomLevel:80,doubleClickZoom:true}).setView([33.38,126.55],10);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{
-      subdomains:"abcd", maxZoom:19, attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
   }
+  setMapTiles();
   markers.forEach(m=>map.removeLayer(m)); markers=[];
   FEST.forEach(f=>{
     const got=has(f.id);

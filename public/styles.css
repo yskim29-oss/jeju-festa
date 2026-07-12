@@ -191,6 +191,8 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
 .leaflet-popup-content-wrapper{border-radius:16px!important;box-shadow:var(--sh-md)!important;padding:4px!important}
 .leaflet-popup-content{margin:12px 14px!important;font-family:var(--font)!important}
 .leaflet-container{font-family:var(--font)!important}
+/* Korean (OSM) tiles: soften colours to match the minimal light look, keep labels legible */
+#map.ko-map .leaflet-tile{filter:grayscale(.55) saturate(.85) brightness(1.05) contrast(.96)}
 .leaflet-control-zoom{border:0!important;box-shadow:var(--sh-md)!important;border-radius:16px!important;overflow:hidden;margin:16px!important}
 .leaflet-control-zoom a{width:44px!important;height:44px!important;line-height:44px!important;font-size:24px!important;color:var(--ink)!important;background:var(--card)!important;border:0!important;font-weight:600}
 .leaflet-control-zoom a:hover{background:var(--lime)!important;color:var(--lime-ink)!important}
