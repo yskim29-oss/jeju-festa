@@ -45,6 +45,7 @@ const STR = {
   map_sub:{ko:"핀을 눌러 축제로 이동하고 방문 인증하세요",en:"Tap a pin to open a festival & check in"},
   map_slots:{ko:"도장 슬롯",en:"Stamp slots"},
   slot_hint:{ko:"5개를 모아 지도를 완성해요",en:"Collect 5 to complete the map"},
+  tip_done:{ko:"방문완료",en:"Visited"},
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
   my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표 5개",en:"Goal 5"},logout:{ko:"로그아웃",en:"Log out"},
   rank_title:{ko:"랭킹",en:"Ranking"},rank_sub:{ko:"이번 시즌 도장을 가장 많이 모은 여행자들",en:"Top stamp collectors this season"},
@@ -135,6 +136,7 @@ function t(k){ return (STR[k]||{})[lang]||k; }
 function tv(o){ return o ? (o[lang]||o.ko) : ""; }
 function dObj(s){ const [y,m,d]=s.split("-").map(Number); return {y,m:m-1,d}; }
 function fmtRange(f){ const a=dObj(f.start),b=dObj(f.end),mm=MON[lang];
+  if(a.m===b.m&&a.d===b.d) return `${mm[a.m]} ${a.d}`;
   return a.m===b.m?`${mm[a.m]} ${a.d}–${b.d}`:`${mm[a.m]} ${a.d} – ${mm[b.m]} ${b.d}`; }
 function stamps(){ return ME?ME.stamps:[]; }
 function has(id){ return stamps().includes(id); }
@@ -318,6 +320,23 @@ function pcard(f){
 }
 
 /* ================= MAP ================= */
+function tipHTML(f){
+  const got=has(f.id);
+  return `<div class="tipcard">
+    <div class="tiptitle"><span class="tdot" style="background:${got?'var(--lime-d)':CATCOLOR[f.cat]}"></span><b>${esc(tv(f.name))}</b></div>
+    <div class="tchips">
+      <span class="tagpill ${f.cat}">${t(f.cat)}</span>
+      ${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}
+      ${got?`<span class="tagpill lime">✓ ${t("tip_done")}</span>`:""}
+    </div>
+    <div class="tline">${svg("i-clock","tipi")}<span>${fmtRange(f)}</span></div>
+    <div class="tline">${svg("i-pin","tipi")}<span>${esc(tv(f.loc))}</span></div>
+    <div class="tfoot">
+      <span class="trate">★ ${f.ratingAvg.toFixed(1)}</span>
+      <span class="tmethod">${svg(methodIcon(f.method),"tipi")}${t("method_"+f.method)}</span>
+    </div>
+  </div>`;
+}
 function renderMap(){
   if(!map){
     map=L.map("map",{scrollWheelZoom:true,zoomControl:true,zoomSnap:.5,wheelPxPerZoomLevel:80,doubleClickZoom:true}).setView([33.38,126.55],10);
@@ -331,9 +350,7 @@ function renderMap(){
         <span class="mkglyph">${f.stamp}</span>${got?'<i class="mkcheck">✓</i>':''}</div>`;
     const icon=L.divIcon({html,className:"mkwrap",iconSize:[46,54],iconAnchor:[23,52],popupAnchor:[0,-50]});
     const mk=L.marker([f.lat,f.lng],{icon,riseOnHover:true}).addTo(map);
-    mk.bindTooltip(
-      `<b>${tv(f.name)}</b><span class="tipcat">${t(f.cat)}${f.green?' · ♻ '+t("green_badge"):''}</span>`,
-      {direction:"top",offset:[0,-46],className:"festtip",opacity:1});
+    mk.bindTooltip(tipHTML(f),{direction:"top",offset:[0,-46],className:"festtip",opacity:1});
     mk.on("click",()=>openDetail(f.id));
     markers.push(mk);
   });
