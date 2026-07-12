@@ -327,12 +327,14 @@ function renderMap(){
   markers.forEach(m=>map.removeLayer(m)); markers=[];
   FEST.forEach(f=>{
     const got=has(f.id);
-    const bg=got?"#0E0F10":CATCOLOR[f.cat];
-    const html=`<div class="mkpin" style="background:${bg}"><span>${got?f.stamp:"📍"}</span></div>`;
-    const icon=L.divIcon({html,className:"",iconSize:[40,40],iconAnchor:[20,38],popupAnchor:[0,-36]});
-    const mk=L.marker([f.lat,f.lng],{icon}).addTo(map);
-    mk.bindPopup(`<div class="mappop"><div class="pn">${tv(f.name)}</div>
-      <div class="mp-btn"><button onclick="openDetail(${f.id})">${t("explore")} →</button></div></div>`);
+    const html=`<div class="mkpin ${got?'got':''}" style="--pin:${CATCOLOR[f.cat]}">
+        <span class="mkglyph">${f.stamp}</span>${got?'<i class="mkcheck">✓</i>':''}</div>`;
+    const icon=L.divIcon({html,className:"mkwrap",iconSize:[46,54],iconAnchor:[23,52],popupAnchor:[0,-50]});
+    const mk=L.marker([f.lat,f.lng],{icon,riseOnHover:true}).addTo(map);
+    mk.bindTooltip(
+      `<b>${tv(f.name)}</b><span class="tipcat">${t(f.cat)}${f.green?' · ♻ '+t("green_badge"):''}</span>`,
+      {direction:"top",offset:[0,-46],className:"festtip",opacity:1});
+    mk.on("click",()=>openDetail(f.id));
     markers.push(mk);
   });
   setTimeout(()=>map.invalidateSize(),120);
