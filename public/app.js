@@ -95,18 +95,21 @@ const STR = {
 const MON={ko:["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"],en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]};
 const CATS=["eco","tradition","agri","leisure"];
 const AVATARS=["🧑‍🌾","🏄","🧗","🚴","👩‍🎨","🧑‍🚀","🐬","🌴"];
-const FIMG={
-  1:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=60",
-  2:"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=60",
-  3:"https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=800&q=60",
-  4:"https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=800&q=60",
-  5:"https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=800&q=60",
-  6:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=60",
-  7:"https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=800&q=60",
-  8:"https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=60",
-  9:"https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?auto=format&fit=crop&w=800&q=60",
-  10:"https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=60"
+const CATIMG={
+  eco:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=60",
+  tradition:"https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=800&q=60",
+  agri:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=60",
+  leisure:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60"
 };
+const FIMG={ // signature overrides by festival id
+  2:"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=60",
+  5:"https://images.unsplash.com/photo-1524704796725-9fc3044a58b2?auto=format&fit=crop&w=800&q=60",
+  7:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60",
+  15:"https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=800&q=60",
+  16:"https://images.unsplash.com/photo-1607153333879-c174d265f1d2?auto=format&fit=crop&w=800&q=60",
+  17:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=60"
+};
+function festImg(f){ return (f&&FIMG[f.id])||(f&&CATIMG[f.cat])||CATIMG.eco; }
 const CATCOLOR={eco:"#2F9E62",tradition:"#B26A2E",agri:"#C9A227",leisure:"#2E86C7"};
 
 /* ================= state ================= */
@@ -193,6 +196,8 @@ async function logout(){
   token=null; ME=null; localStorage.removeItem("jf_token");
   document.getElementById("app").classList.add("hidden");
   document.getElementById("auth").classList.remove("hidden");
+  document.getElementById("inPw").value="";
+  setAuthMode("login");   // always return to the login form, not signup
 }
 
 /* ================= boot ================= */
@@ -303,7 +308,7 @@ function renderPcards(){
 }
 function pcard(f){
   return `<div class="pcard" onclick="openDetail(${f.id})" style="background:${CATCOLOR[f.cat]}">
-    <img src="${FIMG[f.id]}" alt="" onerror="this.style.display='none'">
+    <img src="${festImg(f)}" alt="" onerror="this.style.display='none'">
     ${has(f.id)?`<div class="stampwon">${f.stamp}</div>`:`<button class="iconbtn arw" onclick="event.stopPropagation();openDetail(${f.id})">${svg("i-arrow-ur")}</button>`}
     <div class="toptags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}</div>
     <h4>${tv(f.name)}</h4>
@@ -378,7 +383,7 @@ async function openDetail(id){
   document.getElementById("detailBody").innerHTML=`
     <div class="detail-top">
       <div class="dhero">
-        <img src="${FIMG[id]}" alt="" onerror="this.style.display='none'">
+        <img src="${festImg(f)}" alt="" onerror="this.style.display='none'">
         <div class="dt-top"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}</div>
         <div>
           <h2>${tv(f.name)}</h2>
