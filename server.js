@@ -206,9 +206,73 @@ function festivalPublic(f) {
   const revs = reviewsForFestival(f.id);
   const rAvg = revs.length ? revs.reduce((s, r) => s + r.rating, 0) / revs.length : f.rate;
   const sAvg = revs.length ? revs.reduce((s, r) => s + r.sustainability, 0) / revs.length : 4.0;
-  return { ...f, method: METHODS[f.id], qr: qrFor(f.id),
+  return { ...f, method: f.method || METHODS[f.id] || "geo", qr: qrFor(f.id),
     ratingAvg: +rAvg.toFixed(1), susAvg: +sAvg.toFixed(1), reviewCount: revs.length };
 }
+
+/* ---------------- TourAPI (한국관광공사) live festivals ----------------
+ * Set a free data.go.kr key:  TOURAPI_KEY=xxxx node server.js
+ * Without a key the app runs on the curated list only (LIVE stays empty). */
+const TOURAPI_KEY = process.env.TOURAPI_KEY || "";
+const TOURAPI_ENDPOINTS = [
+  { svc: "KorService2", op: "searchFestival2" },
+  { svc: "KorService1", op: "searchFestival1" }
+];
+let LIVE = [], liveFetchedAt = 0;
+const VERIFY = {
+  geo:    { ko: "위치 기반 체크인", en: "Location check-in" },
+  qr:     { ko: "QR 코드 스캔",   en: "QR code scan" },
+  ticket: { ko: "티켓 사진 업로드", en: "Ticket photo upload" }
+};
+const CATSTAMP = { eco: "🌿", tradition: "🎎", agri: "🧺", leisure: "⛺" };
+function apiDate(s){ return (s && s.length === 8) ? `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}` : ""; }
+function guessCat(t){
+  if (/환경|생태|반딧불|곶자왈|돌고래|플로깅|습지|숲|청정/.test(t)) return "eco";
+  if (/문화|역사|전통|탐라|민속|불축제|굿|예술/.test(t)) return "tradition";
+  if (/꽃|유채|보리|귤|감귤|녹차|농|수확|바당|자리돔|방어|조개|해녀|수산|어촌|테우|미역/.test(t)) return "agri";
+  return "leisure";
+}
+function guessGreen(t){ return /환경|생태|에코|플로깅|업사이클|탄소|정화|보전|반딧불|곶자왈|돌고래|청정|녹색/.test(t); }
+function mapLive(item, i){
+  const txt = (item.title || "") + " " + (item.addr1 || "");
+  const cat = guessCat(txt), method = ["geo","qr","ticket"][i % 3];
+  return {
+    id: Number(item.contentid), cat, green: guessGreen(txt),
+    lat: Number(item.mapy) || 33.38, lng: Number(item.mapx) || 126.55,
+    rate: 4.2, stamp: CATSTAMP[cat],
+    name: { ko: item.title || "", en: item.title || "" },
+    loc:  { ko: item.addr1 || "제주", en: item.addr1 || "Jeju" },
+    start: apiDate(item.eventstartdate), end: apiDate(item.eventenddate) || apiDate(item.eventstartdate),
+    verify: VERIFY[method],
+    desc: { ko: "한국관광공사 TourAPI에서 실시간으로 불러온 축제입니다.",
+            en: "Live festival data from the Korea Tourism Organization (TourAPI)." },
+    sus: { ko: [], en: [] },
+    img: item.firstimage || item.firstimage2 || "",
+    method, live: true
+  };
+}
+async function refreshLive(){
+  if (!TOURAPI_KEY) return;
+  const today = new Date();
+  const ymd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  for (const ep of TOURAPI_ENDPOINTS) {
+    try {
+      const url = `https://apis.data.go.kr/B551011/${ep.svc}/${ep.op}?serviceKey=${encodeURIComponent(TOURAPI_KEY)}` +
+        `&MobileOS=ETC&MobileApp=JejuFesta&_type=json&arrange=A&areaCode=39&numOfRows=100&pageNo=1&eventStartDate=${ymd}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const items = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+      if (Array.isArray(items) && items.length) {
+        LIVE = items.filter(x => x.contentid && x.mapx && x.mapy && x.title).map(mapLive);
+        liveFetchedAt = Date.now();
+        console.log(`TourAPI(${ep.op}): loaded ${LIVE.length} live 제주 festivals`);
+        return;
+      }
+    } catch (e) { /* try next endpoint */ }
+  }
+  console.log("TourAPI: no festivals returned (check key / endpoint)");
+}
+function allFestivals(){ return LIVE.length ? FESTIVALS.concat(LIVE) : FESTIVALS; }
 function userStamps(userId) {
   return DB.checkins.filter(c => c.userId === userId).map(c => c.festivalId);
 }
@@ -295,12 +359,12 @@ const server = http.createServer(async (req, res) => {
 
   /* ---- festivals ---- */
   if (url === "/api/festivals" && req.method === "GET") {
-    return send(res, 200, { festivals: FESTIVALS.map(festivalPublic) });
+    return send(res, 200, { festivals: allFestivals().map(festivalPublic), live: LIVE.length, liveFetchedAt });
   }
 
   const fMatch = url.match(/^\/api\/festivals\/(\d+)$/);
   if (fMatch && req.method === "GET") {
-    const f = FESTIVALS.find(x => x.id === +fMatch[1]);
+    const f = allFestivals().find(x => x.id === +fMatch[1]);
     if (!f) return send(res, 404, { error: "not_found" });
     return send(res, 200, { festival: festivalPublic(f), reviews: reviewsForFestival(f.id) });
   }
@@ -310,9 +374,9 @@ const server = http.createServer(async (req, res) => {
     const u = sessionUser(req);
     if (!u) return send(res, 401, { error: "unauthorized" });
     const fid = +ciMatch[1];
-    const f = FESTIVALS.find(x => x.id === fid);
+    const f = allFestivals().find(x => x.id === fid);
     if (!f) return send(res, 404, { error: "not_found" });
-    const method = METHODS[fid];
+    const method = f.method || METHODS[fid] || "geo";
 
     // already collected → idempotent success
     if (DB.checkins.some(c => c.userId === u.id && c.festivalId === fid))
@@ -350,7 +414,7 @@ const server = http.createServer(async (req, res) => {
     const u = sessionUser(req);
     if (!u) return send(res, 401, { error: "unauthorized" });
     const fid = +rvMatch[1];
-    if (!FESTIVALS.some(f => f.id === fid)) return send(res, 404, { error: "not_found" });
+    if (!allFestivals().some(f => f.id === fid)) return send(res, 404, { error: "not_found" });
     const rating = Math.max(1, Math.min(5, +body.rating || 5));
     const sustainability = Math.max(1, Math.min(5, +body.sustainability || 5));
     const text = (body.text || "").toString().slice(0, 400);
@@ -358,7 +422,7 @@ const server = http.createServer(async (req, res) => {
       rating, sustainability, text: { ko: text, en: text }, at: Date.now() };
     DB.reviews.unshift(rev);
     saveDB();
-    return send(res, 200, { review: rev, festival: festivalPublic(FESTIVALS.find(f => f.id === fid)) });
+    return send(res, 200, { review: rev, festival: festivalPublic(allFestivals().find(f => f.id === fid)) });
   }
 
   /* ---- leaderboard ---- */
@@ -377,4 +441,10 @@ const server = http.createServer(async (req, res) => {
   return send(res, 404, { error: "unknown_route" });
 });
 
-server.listen(PORT, () => console.log(`Jeju Festa server → http://localhost:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Jeju Festa server → http://localhost:${PORT}`);
+  console.log(TOURAPI_KEY ? "TourAPI key detected — fetching live 제주 festivals…"
+                          : "TourAPI key not set — running on the curated festival list. Set TOURAPI_KEY to enable live data.");
+});
+refreshLive();                                   // initial live fetch
+setInterval(refreshLive, 6 * 60 * 60 * 1000);    // refresh every 6h

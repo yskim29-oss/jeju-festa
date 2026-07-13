@@ -110,7 +110,8 @@ const FIMG={ // signature overrides by festival id
   16:"https://images.unsplash.com/photo-1607153333879-c174d265f1d2?auto=format&fit=crop&w=800&q=60",
   17:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=60"
 };
-function festImg(f){ return (f&&FIMG[f.id])||(f&&CATIMG[f.cat])||CATIMG.eco; }
+function festImg(f){ return (f&&f.img)||(f&&FIMG[f.id])||(f&&CATIMG[f.cat])||CATIMG.eco; }
+function liveBadge(f){ return f&&f.live?`<span class="tagpill live">● LIVE</span>`:""; }
 const CATCOLOR={eco:"#2F9E62",tradition:"#B26A2E",agri:"#C9A227",leisure:"#2E86C7"};
 
 /* ================= state ================= */
@@ -208,6 +209,15 @@ async function enterApp(){
   document.getElementById("app").classList.remove("hidden");
   const data=await api("/festivals"); FEST=data.festivals;
   applyStatic(); updateHeader(); go("home");
+  if(!window._festTimer) window._festTimer=setInterval(refreshFestivals, 300000); // live data every 5 min
+}
+async function refreshFestivals(){
+  try{
+    const d=await api("/festivals"); FEST=d.festivals;
+    const v=document.querySelector("section.view.on"); if(!v) return;
+    const id=v.id.replace("v-","");
+    if(id==="map") renderMap(); else if(id==="home"){ renderInits(); renderPcards(); } else if(id==="search") renderSearch();
+  }catch(e){}
 }
 async function boot(){
   lang=localStorage.getItem("jf_lang")||"ko";
@@ -299,7 +309,7 @@ function renderInits(){
 function initRow(f){
   return `<div class="init-row ${has(f.id)?'done':''}" onclick="openDetail(${f.id})">
     <div class="tt">${tv(f.name)}<small>${tv(f.loc)}</small></div>
-    <div class="init-tags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}</div>
+    <div class="init-tags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}${liveBadge(f)}</div>
     <div class="init-date">${fmtRange(f)}</div>
     <div class="go">${svg(has(f.id)?"i-check":"i-arrow-ur")}</div>
   </div>`;
@@ -312,7 +322,7 @@ function pcard(f){
   return `<div class="pcard" onclick="openDetail(${f.id})" style="background:${CATCOLOR[f.cat]}">
     <img src="${festImg(f)}" alt="" onerror="this.style.display='none'">
     ${has(f.id)?`<div class="stampwon">${f.stamp}</div>`:`<button class="iconbtn arw" onclick="event.stopPropagation();openDetail(${f.id})">${svg("i-arrow-ur")}</button>`}
-    <div class="toptags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}</div>
+    <div class="toptags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}${liveBadge(f)}</div>
     <h4>${tv(f.name)}</h4>
     <p>${tv(f.desc)}</p>
     <div class="explore"><span>${t("explore")}</span><span class="go">${svg("i-arrow")}</span></div>
@@ -327,6 +337,7 @@ function tipHTML(f){
     <div class="tchips">
       <span class="tagpill ${f.cat}">${t(f.cat)}</span>
       ${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}
+      ${liveBadge(f)}
       ${got?`<span class="tagpill lime">✓ ${t("tip_done")}</span>`:""}
     </div>
     <div class="tline">${svg("i-clock","tipi")}<span>${fmtRange(f)}</span></div>
@@ -418,7 +429,7 @@ async function openDetail(id){
     <div class="detail-top">
       <div class="dhero">
         <img src="${festImg(f)}" alt="" onerror="this.style.display='none'">
-        <div class="dt-top"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}</div>
+        <div class="dt-top"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}${liveBadge(f)}</div>
         <div>
           <h2>${tv(f.name)}</h2>
           <div class="dmeta">
@@ -433,10 +444,10 @@ async function openDetail(id){
           <div class="metric"><div class="big" style="color:var(--star)">★ ${f.ratingAvg.toFixed(1)}</div><div class="lab">${t("rating")}</div></div>
           <div class="metric"><div class="big" style="color:var(--green)">♻ ${f.susAvg.toFixed(1)}</div><div class="lab">${t("sustainability")}</div></div>
         </div>
-        <div class="dcard">
+        ${tv(f.sus).length?`<div class="dcard">
           <div style="font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:10px">♻ ${t("sus_points")}</div>
           <div class="susbox"><ul>${tv(f.sus).map(s=>`<li>${s}</li>`).join("")}</ul></div>
-        </div>
+        </div>`:""}
       </div>
     </div>
     <p style="font-size:15px;line-height:1.65;color:var(--ink-2);margin:20px 0 0;max-width:680px">${tv(f.desc)}</p>
