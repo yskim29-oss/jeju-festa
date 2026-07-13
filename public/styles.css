@@ -467,3 +467,58 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
   .metrics{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ============================================================
+   Skeuomorphic layer — tactile depth, paper grain, ink stamps
+   ============================================================ */
+
+/* subtle paper grain over the whole page */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.32;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:170px 170px}
+
+/* tactile, pressable buttons */
+.btn-lime{background:linear-gradient(180deg,#E9FB6E,#DEF24E 55%,#CDE636);border:1px solid rgba(90,100,20,.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 3px rgba(120,130,30,.28),0 6px 14px rgba(150,170,40,.34),0 2px 3px rgba(0,0,0,.12)}
+.btn-lime:hover{background:linear-gradient(180deg,#E4F85E,#D4EA45 55%,#C6DE30);transform:translateY(-2px)}
+.btn-lime:active{transform:translateY(1px);box-shadow:inset 0 2px 4px rgba(120,130,30,.42),0 2px 6px rgba(150,170,40,.3)}
+.btn-dark{background:linear-gradient(180deg,#34373B,#0E0F10);border:1px solid rgba(0,0,0,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 6px 14px rgba(0,0,0,.3),0 2px 3px rgba(0,0,0,.22)}
+.btn-dark:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.25)}
+.btn-ghost{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 6px rgba(40,42,32,.09)}
+
+/* card surfaces: top light-catch + layered soft shadow */
+.inits,.newsletter,.metric,.dcard,.reward,.rankrow,.maplist,.review,.dhero,.pcard,.hero-photo,.authcard,.sheet-card,.stampcard{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 10px 26px rgba(40,42,32,.10),0 2px 5px rgba(40,42,32,.06)}
+.hero-lime{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 10px rgba(140,150,40,.18),0 10px 28px rgba(150,170,40,.22)}
+.profile{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 10px rgba(140,150,40,.2),0 12px 26px rgba(160,175,45,.28)}
+.tracker{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 30px rgba(0,0,0,.3)}
+
+/* chips & small controls feel like physical keys */
+.pts{box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 2px 5px rgba(150,170,40,.32)}
+.monthnav button,.iconbtn,.selectw select,.chipf{box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 3px 7px rgba(40,42,32,.1)}
+.monthnav button:active,.iconbtn:active{transform:translateY(1px)}
+.subscribe,.nl-form,.searchfield input,.field input,.rvform textarea{
+  box-shadow:inset 0 2px 5px rgba(40,42,32,.09),inset 0 -1px 0 rgba(255,255,255,.8)}
+
+/* STAMP SLOTS — pressed into paper, filled ones look ink-stamped */
+.slots.light .slot{background:linear-gradient(180deg,#ffffff,#f1eee4);border-color:rgba(0,0,0,.07);
+  box-shadow:inset 0 2px 5px rgba(60,55,40,.11),inset 0 -1px 0 rgba(255,255,255,.9)}
+.slots.light .slot.filled{background:radial-gradient(circle at 50% 38%,#fff6e8,#ffe4c4);border-color:rgba(217,118,26,.55);
+  box-shadow:inset 0 0 0 2px rgba(217,118,26,.38),inset 0 2px 7px rgba(217,118,26,.18),0 4px 11px rgba(217,118,26,.24)}
+.tracker .slot{box-shadow:inset 0 2px 6px rgba(0,0,0,.5),inset 0 -1px 0 rgba(255,255,255,.05)}
+.tracker .slot.filled{background:rgba(222,242,78,.12);
+  box-shadow:inset 0 0 0 2px var(--lime),inset 0 2px 6px rgba(0,0,0,.35),0 0 18px rgba(222,242,78,.32)}
+/* ink-stamped look: slight rotation + pressed shadow, varied per slot */
+.slot.filled .simg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.24)) saturate(1.15) contrast(1.04);transform:rotate(-8deg)}
+.slots .slot:nth-child(2n).filled .simg{transform:rotate(7deg)}
+.slots .slot:nth-child(3n).filled .simg{transform:rotate(-3deg)}
+.slots .slot:nth-child(5n).filled .simg{transform:rotate(11deg)}
+
+/* STAMP-EARNED modal → a pressed rubber stamp */
+.stampcard .big{width:132px;height:132px;margin:2px auto 14px;border-radius:50%;display:grid;place-items:center;font-size:62px;
+  background:radial-gradient(circle at 50% 40%,#fff5e9,#ffe3c2);transform:rotate(-7deg);
+  box-shadow:inset 0 0 0 3px rgba(217,118,26,.42),inset 0 5px 14px rgba(217,118,26,.17),0 10px 24px rgba(217,118,26,.26)}
+@keyframes pop{from{transform:scale(0) rotate(-38deg);opacity:0}to{transform:scale(1) rotate(-7deg);opacity:1}}
+
+@media (prefers-reduced-motion:reduce){body::before{display:none}}
