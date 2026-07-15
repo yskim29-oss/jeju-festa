@@ -290,6 +290,16 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
 .susbox{background:var(--card-2);border-radius:var(--r-md);padding:18px 20px}
 .susbox ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
 .susbox li{font-size:14px;color:var(--ink-2)}
+.infocard{margin-top:18px;max-width:680px}
+.infohd{font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.infohd .icon{width:16px;height:16px;color:var(--halla)}
+.infolist{display:flex;flex-direction:column;gap:10px}
+.inforow{display:flex;gap:14px;font-size:13.5px}
+.inforow .ik{flex:0 0 62px;color:var(--muted);font-weight:700}
+.inforow .iv{color:var(--ink-2);flex:1;line-height:1.55;min-width:0;word-break:break-word}
+.hplink{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-weight:700;font-size:13.5px;
+  color:var(--ocean-d);text-decoration:underline;text-underline-offset:3px}
+.hplink .icon{width:14px;height:14px}
 .sectlabel{font-family:var(--display);font-weight:600;font-size:19px;margin:30px 0 14px;display:flex;align-items:center;gap:9px}
 .review{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px}
 .review+.review{margin-top:11px}

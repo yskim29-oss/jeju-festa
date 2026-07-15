@@ -55,6 +55,7 @@ const STR = {
   sort_date:{ko:"날짜순",en:"By date"},sort_rating:{ko:"평점순",en:"Top rated"},sort_sus:{ko:"지속가능순",en:"Sustainable"},sort_name:{ko:"이름순",en:"By name"},
   rating:{ko:"평점",en:"Rating"},sustainability:{ko:"지속가능 체감도",en:"Sustainability"},
   sus_points:{ko:"지속가능 포인트",en:"Sustainability highlights"},reviews:{ko:"리뷰",en:"Reviews"},
+  event_info:{ko:"행사 정보",en:"Event info"},official_site:{ko:"공식 홈페이지",en:"Official site"},
   when:{ko:"기간",en:"When"},where:{ko:"장소",en:"Where"},verify_method:{ko:"인증 방법",en:"Check-in"},
   write_review:{ko:"리뷰 남기기",en:"Write a review"},rv_rating:{ko:"평점",en:"Rating"},rv_sus:{ko:"지속가능 체감도",en:"Sustainability"},
   rv_placeholder:{ko:"축제는 어땠나요? (선택)",en:"How was it? (optional)"},rv_submit:{ko:"리뷰 등록",en:"Post review"},rv_thanks:{ko:"리뷰 고마워요!",en:"Thanks for the review!"},
@@ -450,7 +451,12 @@ async function openDetail(id){
         </div>`:""}
       </div>
     </div>
-    <p style="font-size:15px;line-height:1.65;color:var(--ink-2);margin:20px 0 0;max-width:680px">${tv(f.desc)}</p>
+    <p style="font-size:15px;line-height:1.7;color:var(--ink-2);margin:20px 0 0;max-width:680px">${nl2br(tv(f.desc))}</p>
+    ${f.info&&Object.keys(f.info).length?`<div class="dcard infocard">
+      <div class="infohd">${svg("i-flag")}${t("event_info")}</div>
+      <div class="infolist">${Object.entries(f.info).map(([k,v])=>`<div class="inforow"><span class="ik">${esc(k)}</span><span class="iv">${nl2br(v)}</span></div>`).join("")}</div>
+      ${f.homepage?`<a class="hplink" href="${esc(f.homepage)}" target="_blank" rel="noopener noreferrer">${svg("i-arrow-ur","icon sm")}${t("official_site")}</a>`:""}
+    </div>`:""}
     <div class="sectlabel">${svg("i-star")}${t("reviews")} (${reviews.length})</div>
     <div id="reviewList">${reviews.map(reviewHTML).join("")||`<div class="empty" style="padding:24px">—</div>`}</div>
     ${done?reviewFormHTML():""}

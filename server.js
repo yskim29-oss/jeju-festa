@@ -284,6 +284,47 @@ async function refreshLive(){
   console.log("TourAPI: no festivals returned (check key / endpoint)");
 }
 function allFestivals(){ return LIVE.length ? FESTIVALS.concat(LIVE) : FESTIVALS; }
+
+/* on-demand detail enrichment for live festivals (real overview + event info) */
+function stripHtml(s){
+  return (s || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&amp;/gi, "&")
+    .replace(/&#39;/g, "'").replace(/&quot;/gi, '"')
+    .replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").trim();
+}
+async function tourFetch(op, extra){
+  const url = `https://apis.data.go.kr/B551011/KorService2/${op}?serviceKey=${encodeURIComponent(TOURAPI_KEY)}` +
+    `&MobileOS=ETC&MobileApp=JejuFesta&_type=json${extra}`;
+  const res = await fetch(url); return res.json();
+}
+function firstItem(data){
+  const it = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
+  return Array.isArray(it) ? it[0] : it;
+}
+async function enrichLive(f){
+  if (!f || !f.live || f._enriched) return;
+  f._enriched = true;                                   // avoid duplicate fetches
+  try {
+    const common = firstItem(await tourFetch("detailCommon2", `&contentId=${f.id}`));
+    if (common) {
+      const ov = stripHtml(common.overview);
+      if (ov) f.desc = { ko: ov, en: ov };
+      const hp = (common.homepage || "").match(/https?:\/\/[^\s"'<>]+/);
+      if (hp) f.homepage = hp[0];
+    }
+    const intro = firstItem(await tourFetch("detailIntro2", `&contentId=${f.id}&contentTypeId=15`));
+    if (intro) {
+      const info = {}, add = (k, v) => { v = stripHtml(v); if (v) info[k] = v; };
+      add("장소", intro.eventplace);
+      add("주최", intro.sponsor1);
+      add("문의", intro.sponsor1tel || intro.sponsortel1);
+      add("관람시간", intro.playtime);
+      add("이용요금", intro.usetimefestival);
+      add("프로그램", intro.program);
+      if (Object.keys(info).length) f.info = info;
+    }
+  } catch (e) { /* keep the generic description on failure */ }
+}
 function userStamps(userId) {
   return DB.checkins.filter(c => c.userId === userId).map(c => c.festivalId);
 }
@@ -377,6 +418,7 @@ const server = http.createServer(async (req, res) => {
   if (fMatch && req.method === "GET") {
     const f = allFestivals().find(x => x.id === +fMatch[1]);
     if (!f) return send(res, 404, { error: "not_found" });
+    if (f.live) await enrichLive(f);
     return send(res, 200, { festival: festivalPublic(f), reviews: reviewsForFestival(f.id) });
   }
 
