@@ -252,23 +252,29 @@ function mapLive(item, i){
     desc: { ko: "한국관광공사 TourAPI에서 실시간으로 불러온 축제입니다.",
             en: "Live festival data from the Korea Tourism Organization (TourAPI)." },
     sus: { ko: [], en: [] },
-    img: item.firstimage || item.firstimage2 || "",
+    img: (item.firstimage || item.firstimage2 || "").replace(/^http:\/\//, "https://"),
     method, live: true
   };
 }
+function normTitle(s){ return (s||"").replace(/\s|제\d+회|축제|페스티벌|festival/gi, ""); }
 async function refreshLive(){
   if (!TOURAPI_KEY) return;
-  const today = new Date();
-  const ymd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
+  // trailing 24-month window so we always catch the festivals the API actually has registered
+  const d = new Date(); d.setMonth(d.getMonth() - 24);
+  const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const curated = new Set(FESTIVALS.map(f => normTitle(f.name.ko)));
   for (const ep of TOURAPI_ENDPOINTS) {
     try {
       const url = `https://apis.data.go.kr/B551011/${ep.svc}/${ep.op}?serviceKey=${encodeURIComponent(TOURAPI_KEY)}` +
-        `&MobileOS=ETC&MobileApp=JejuFesta&_type=json&arrange=A&areaCode=39&numOfRows=100&pageNo=1&eventStartDate=${ymd}`;
+        `&MobileOS=ETC&MobileApp=JejuFesta&_type=json&arrange=A&areaCode=39&numOfRows=200&pageNo=1&eventStartDate=${ymd}`;
       const res = await fetch(url);
       const data = await res.json();
       const items = data && data.response && data.response.body && data.response.body.items && data.response.body.items.item;
       if (Array.isArray(items) && items.length) {
-        LIVE = items.filter(x => x.contentid && x.mapx && x.mapy && x.title).map(mapLive);
+        LIVE = items
+          .filter(x => x.contentid && x.mapx && x.mapy && x.title)
+          .map(mapLive)
+          .filter(f => !curated.has(normTitle(f.name.ko)));   // drop duplicates of curated ones
         liveFetchedAt = Date.now();
         console.log(`TourAPI(${ep.op}): loaded ${LIVE.length} live 제주 festivals`);
         return;
