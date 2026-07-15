@@ -213,7 +213,12 @@ function festivalPublic(f) {
 /* ---------------- TourAPI (한국관광공사) live festivals ----------------
  * Set a free data.go.kr key:  TOURAPI_KEY=xxxx node server.js
  * Without a key the app runs on the curated list only (LIVE stays empty). */
-const TOURAPI_KEY = process.env.TOURAPI_KEY || "";
+function readKeyFile(){
+  try { return fs.readFileSync(path.join(ROOT, "data", "tourapi_key.txt"), "utf8").trim(); }
+  catch (e) { return ""; }
+}
+// key from env var, or from data/tourapi_key.txt (data/ is gitignored → never committed)
+const TOURAPI_KEY = process.env.TOURAPI_KEY || readKeyFile();
 const TOURAPI_ENDPOINTS = [
   { svc: "KorService2", op: "searchFestival2" },
   { svc: "KorService1", op: "searchFestival1" }
