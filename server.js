@@ -11,19 +11,48 @@ const PUB = path.join(ROOT, "public");
 const DB_PATH = path.join(ROOT, "data", "db.json");
 const PORT = process.env.PORT || 8790;
 
-/* ---------------- storage ---------------- */
-function loadDB() {
-  try { return JSON.parse(fs.readFileSync(DB_PATH, "utf8")); }
-  catch (e) { return { users: {}, sessions: {}, checkins: [], reviews: [] }; }
+/* ---------------- storage: Upstash Redis if configured, else local file ----------------
+ * Persistent DB on any host by setting these env vars (never commit them):
+ *   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+ * Without them it falls back to data/db.json (fine locally; wiped on redeploy on free hosts). */
+const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
+const DB_KEY = "jeju:db";
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [] });
+
+async function redisGet(key) {
+  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` } });
+  if (!r.ok) throw new Error("redis get " + r.status);
+  return (await r.json()).result;                       // string or null
 }
-let DB = loadDB();
+async function redisSet(key, val) {
+  const r = await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+    method: "POST", headers: { Authorization: `Bearer ${REDIS_TOKEN}` }, body: val });
+  if (!r.ok) throw new Error("redis set " + r.status);
+  return (await r.json()).result;
+}
+
+let DB = emptyDB();
+async function loadDB() {
+  if (USE_REDIS) {
+    try { const v = await redisGet(DB_KEY); return v ? JSON.parse(v) : emptyDB(); }
+    catch (e) { console.log("DB load (redis) failed:", e.message); return emptyDB(); }
+  }
+  try { return JSON.parse(fs.readFileSync(DB_PATH, "utf8")); } catch (e) { return emptyDB(); }
+}
 let saveTimer = null;
 function saveDB() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    fs.writeFileSync(DB_PATH, JSON.stringify(DB, null, 2));
-  }, 40);
+  saveTimer = setTimeout(async () => {
+    if (USE_REDIS) {
+      try { await redisSet(DB_KEY, JSON.stringify(DB)); }
+      catch (e) { console.log("DB save (redis) failed:", e.message); }
+    } else {
+      try { fs.mkdirSync(path.dirname(DB_PATH), { recursive: true }); fs.writeFileSync(DB_PATH, JSON.stringify(DB, null, 2)); }
+      catch (e) { console.log("DB save (file) failed:", e.message); }
+    }
+  }, 200);
 }
 
 /* ---------------- festivals (source of truth) ---------------- */
@@ -552,10 +581,15 @@ const server = http.createServer(async (req, res) => {
   return send(res, 404, { error: "unknown_route" });
 });
 
-server.listen(PORT, () => {
-  console.log(`Jeju Festa server → http://localhost:${PORT}`);
-  console.log(TOURAPI_KEY ? "TourAPI key detected — fetching live 제주 festivals…"
-                          : "TourAPI key not set — running on the curated festival list. Set TOURAPI_KEY to enable live data.");
-});
-refreshLive();                                   // initial live fetch
-setInterval(refreshLive, 6 * 60 * 60 * 1000);    // refresh every 6h
+async function start() {
+  DB = await loadDB();                            // load persisted data before serving
+  server.listen(PORT, () => {
+    console.log(`Jeju Festa server → http://localhost:${PORT}`);
+    console.log(USE_REDIS ? "Storage: Upstash Redis (persistent ✓)" : "Storage: local file data/db.json (resets on redeploy)");
+    console.log(TOURAPI_KEY ? "TourAPI key detected — fetching live 제주 festivals…"
+                            : "TourAPI key not set — curated festival list only.");
+  });
+  refreshLive();                                  // initial live fetch
+  setInterval(refreshLive, 6 * 60 * 60 * 1000);   // refresh every 6h
+}
+start();
