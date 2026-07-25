@@ -64,6 +64,13 @@ header.topbar{position:sticky;top:0;z-index:60;padding:14px 0;background:linear-
 .lang button{padding:6px 11px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted)}
 .lang button.on{background:var(--ink);color:#fff}
 .menubtn{display:none}
+.navright{position:relative}
+.navdrop{position:absolute;right:0;top:calc(100% + 12px);background:var(--card);border:1px solid var(--line);
+  border-radius:16px;box-shadow:var(--sh-md);padding:8px;min-width:172px;display:none;flex-direction:column;gap:2px;z-index:70}
+.navdrop.open{display:flex;animation:fadeup .2s var(--ease)}
+.navdrop button{text-align:left;padding:12px 15px;border-radius:11px;font-weight:700;font-size:15px;color:var(--ink-2);transition:var(--dur) var(--ease)}
+.navdrop button:hover{background:var(--card-2)}
+.navdrop button.on{background:var(--ink);color:#fff}
 
 /* ---------- sections ---------- */
 main{padding-bottom:40px}
@@ -384,6 +391,9 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
 .avatarpick button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:23px;transition:var(--dur) var(--ease)}
 .avatarpick button.on{border-color:var(--ink);background:var(--lime);transform:scale(1.06)}
 .authbtn{width:100%;padding:15px;font-size:16px;margin-top:6px}
+.authdivider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12.5px;font-weight:600}
+.authdivider::before,.authdivider::after{content:"";flex:1;height:1px;background:var(--line)}
+#googleBtn{display:flex;justify-content:center;min-height:44px;color-scheme:light}
 .authbtn:disabled{opacity:.6;cursor:wait}
 .authswitch{text-align:center;font-size:14px;color:var(--muted);margin-top:20px}
 .authswitch button{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}

@@ -34,6 +34,26 @@ TOURAPI_KEY="발급받은키" node server.js
 
 > 남방큰돌고래의 날·월대천 축제 같은 소규모 축제는 TourAPI에 없을 수 있어, API에 있는 축제만 실시간으로 추가되고 나머지는 큐레이션으로 유지됩니다.
 
+## 구글 로그인 (선택)
+
+`GOOGLE_CLIENT_ID`가 설정되면 로그인 화면에 **"Continue with Google"** 버튼이 자동으로 나타납니다. 서버가 구글 ID 토큰을 검증(RS256, 공개키 캐싱, aud/iss/exp 확인)해 계정을 만들거나 로그인시켜요. 키가 없으면 버튼은 숨겨지고 일반 이메일 로그인만 동작합니다.
+
+**OAuth 클라이언트 ID 발급 (무료)**
+1. [Google Cloud Console](https://console.cloud.google.com) → **API 및 서비스 → 사용자 인증 정보**
+2. **사용자 인증 정보 만들기 → OAuth 클라이언트 ID → 웹 애플리케이션**
+3. **승인된 자바스크립트 원본**에 앱 주소 추가 (예: `http://localhost:8790`)
+4. 생성된 **클라이언트 ID** 복사 (`...apps.googleusercontent.com`)
+
+**실행**
+```bash
+GOOGLE_CLIENT_ID="...apps.googleusercontent.com" node server.js
+# 또는
+echo "...apps.googleusercontent.com" > "jeju-festa/data/google_client_id.txt"
+node server.js
+```
+- 클라이언트 ID는 원래 공개값이지만, `data/`는 gitignore라 저장소엔 안 올라가요.
+- 구글 로그인(GIS)은 **실제 브라우저에서 가장 잘 동작**해요 (내장 프리뷰/사파리 사생활 보호 등에서는 팝업이 막힐 수 있음).
+
 ## 구조
 
 ```

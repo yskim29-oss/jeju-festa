@@ -127,6 +127,10 @@
       <div class="field"><label data-t="f_email"></label><input id="inEmail" type="email" autocomplete="email" inputmode="email"></div>
       <div class="field"><label data-t="f_pw"></label><input id="inPw" type="password" autocomplete="current-password"></div>
       <button class="btn btn-dark authbtn" id="authBtn"></button>
+      <div id="googleWrap" class="hidden">
+        <div class="authdivider"><span data-t="or"></span></div>
+        <div id="googleBtn"></div>
+      </div>
       <div class="authswitch"><span id="switchTxt"></span> <button id="switchBtn"></button></div>
       <div class="demohint"><span data-t="demo_hint"></span> <button id="demoBtn" data-t="demo_btn"></button></div>
       <div class="demohint" style="margin-top:8px"><button onclick="showIntro()" data-t="intro_replay"></button></div>
@@ -154,7 +158,14 @@
             <button id="langKo" onclick="setLang('ko')">KO</button>
             <button id="langEn" onclick="setLang('en')">EN</button>
           </div>
-          <button class="iconbtn plain menubtn" onclick="cycleNav()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+          <button class="iconbtn plain menubtn" onclick="toggleNavMenu(event)"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+          <div class="navdrop" id="navDrop">
+            <button data-nav="home" onclick="navPick('home')" data-t="nav_home"></button>
+            <button data-nav="map" onclick="navPick('map')" data-t="nav_map"></button>
+            <button data-nav="search" onclick="navPick('search')" data-t="nav_search"></button>
+            <button data-nav="my" onclick="navPick('my')" data-t="nav_my"></button>
+            <button data-nav="rank" onclick="navPick('rank')" data-t="nav_rank"></button>
+          </div>
         </div>
       </div>
     </div>
@@ -323,6 +334,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -18,6 +18,8 @@ const STR = {
   err_email_taken:{ko:"이미 가입된 이메일이에요.",en:"That email is already registered."},
   err_invalid_credentials:{ko:"이메일 또는 비밀번호가 올바르지 않아요.",en:"Incorrect email or password."},
   err_network:{ko:"서버에 연결할 수 없어요.",en:"Could not reach the server."},
+  err_google_failed:{ko:"구글 로그인에 실패했어요.",en:"Google sign-in failed."},
+  or:{ko:"또는",en:"or"},
 
   nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},
   hero_eyebrow:{ko:"제주 지속가능 축제",en:"Jeju Sustainable Festivals"},
@@ -135,7 +137,7 @@ const CATCOLOR={eco:"#2F9E62",tradition:"#B26A2E",agri:"#C9A227",leisure:"#2E86C
 /* ================= state ================= */
 let lang=localStorage.getItem("jf_lang")||"ko";
 let token=localStorage.getItem("jf_token")||null;
-let ME=null, FEST=[], curMonth=8, curYear=2025;   // default: autumn
+let ME=null, FEST=[], curMonth=7, curYear=2026;   // default: August
 let catFilter="all", greenOnly=false, sortMode="date";
 let authMode="login", pickedAvatar="🧑‍🌾";
 let map=null, markers=[], mapTiles=null, mapTileLang=null;
@@ -250,6 +252,7 @@ async function boot(){
   document.getElementById("demoBtn").onclick=demoLogin;
   document.getElementById("inPw").addEventListener("keydown",e=>{if(e.key==="Enter")submitAuth();});
   if(!localStorage.getItem("jf_intro_seen")) showIntro();   // first-visit onboarding
+  initGoogle();   // shows a Google button if GOOGLE_CLIENT_ID is configured
   if(token){ try{ const d=await api("/me"); ME=d.user; await enterApp(); return; }catch(e){ token=null; localStorage.removeItem("jf_token"); } }
 }
 
@@ -285,7 +288,7 @@ const NAV=["home","map","search","my","rank"];
 function go(view){
   document.querySelectorAll("section.view").forEach(s=>s.classList.remove("on"));
   document.getElementById("v-"+view).classList.add("on");
-  document.querySelectorAll(".navlinks button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-nav")===view));
+  document.querySelectorAll(".navlinks button, .navdrop button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-nav")===view));
   window.scrollTo({top:0,behavior:"smooth"});
   if(view==="home") renderHome();
   if(view==="map") renderMap();
@@ -294,6 +297,30 @@ function go(view){
   if(view==="rank") renderRank();
 }
 function cycleNav(){ const cur=document.querySelector("section.view.on").id.replace("v-",""); const i=NAV.indexOf(cur); go(NAV[(i+1)%NAV.length]); }
+/* mobile nav dropdown */
+function toggleNavMenu(e){ if(e) e.stopPropagation(); document.getElementById("navDrop").classList.toggle("open"); }
+function navPick(v){ document.getElementById("navDrop").classList.remove("open"); go(v); }
+document.addEventListener("click",()=>{ const d=document.getElementById("navDrop"); if(d) d.classList.remove("open"); });
+
+/* Google Sign-In */
+async function initGoogle(){
+  let cfg; try{ cfg=await api("/config"); }catch(e){ return; }
+  if(!cfg.googleClientId) return;
+  (function render(){
+    if(!window.google||!google.accounts||!google.accounts.id){ setTimeout(render,300); return; }
+    google.accounts.id.initialize({client_id:cfg.googleClientId, callback:onGoogleCredential});
+    const el=document.getElementById("googleBtn"); el.innerHTML="";
+    google.accounts.id.renderButton(el,{theme:"outline",size:"large",shape:"pill",text:"continue_with",width:320});
+    document.getElementById("googleWrap").classList.remove("hidden");
+  })();
+}
+async function onGoogleCredential(resp){
+  hideAuthErr();
+  try{
+    const data=await api("/google",{method:"POST",body:JSON.stringify({credential:resp.credential})});
+    token=data.token; ME=data.user; localStorage.setItem("jf_token",token); await enterApp();
+  }catch(e){ showAuthErr("google_failed"); }
+}
 
 /* ================= sorting / filtering ================= */
 function setSort(v){ sortMode=v; renderHome(); }
@@ -303,14 +330,14 @@ function sortList(list){ const m=sortMode; return list.slice().sort((a,b)=>{
   if(m==="name") return tv(a.name).localeCompare(tv(b.name),lang);
   return a.start.localeCompare(b.start); }); }
 function inMonth(f){ const a=dObj(f.start),b=dObj(f.end),cur=curYear*12+curMonth; return (a.y*12+a.m)<=cur && cur<=(b.y*12+b.m); }
-/* open the calendar on the autumn (Sep–Nov) month that has the most festivals */
+/* open the calendar on August (of whichever year has the most festivals) */
 function pickDefaultMonth(){
-  let best={c:-1,m:8,y:2025};
-  [2025,2026].forEach(y=>[8,9,10].forEach(m=>{
-    const cur=y*12+m;
+  let best={c:-1,m:7,y:2026};
+  [2025,2026].forEach(y=>{
+    const m=7, cur=y*12+m;
     const c=FEST.filter(f=>{const a=dObj(f.start),b=dObj(f.end);return (a.y*12+a.m)<=cur&&cur<=(b.y*12+b.m);}).length;
     if(c>best.c) best={c,m,y};
-  }));
+  });
   curMonth=best.m; curYear=best.y;
 }
 function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;} renderHome(); }

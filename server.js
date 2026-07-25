@@ -219,6 +219,38 @@ function readKeyFile(){
 }
 // key from env var, or from data/tourapi_key.txt (data/ is gitignored → never committed)
 const TOURAPI_KEY = process.env.TOURAPI_KEY || readKeyFile();
+
+/* ---------------- Google Sign-In (verify ID token, zero-dep) ----------------
+ * Set your OAuth client id:  GOOGLE_CLIENT_ID=xxx node server.js
+ * or put it in data/google_client_id.txt (gitignored). */
+function readClientIdFile(){ try { return fs.readFileSync(path.join(ROOT, "data", "google_client_id.txt"), "utf8").trim(); } catch (e) { return ""; } }
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || readClientIdFile();
+let googleKeys = null, googleKeysExp = 0;
+async function getGoogleKeys(){
+  if (googleKeys && Date.now() < googleKeysExp) return googleKeys;
+  const res = await fetch("https://www.googleapis.com/oauth2/v3/certs");
+  googleKeys = await res.json();
+  googleKeysExp = Date.now() + 60 * 60 * 1000;   // cache 1h
+  return googleKeys;
+}
+async function verifyGoogleToken(idToken){
+  const p = (idToken || "").split(".");
+  if (p.length !== 3) throw new Error("malformed");
+  const header = JSON.parse(Buffer.from(p[0], "base64url").toString());
+  const payload = JSON.parse(Buffer.from(p[1], "base64url").toString());
+  const { keys } = await getGoogleKeys();
+  const jwk = keys.find(k => k.kid === header.kid);
+  if (!jwk) throw new Error("key_not_found");
+  const pub = crypto.createPublicKey({ key: jwk, format: "jwk" });
+  const ok = crypto.verify("RSA-SHA256", Buffer.from(p[0] + "." + p[1]), pub, Buffer.from(p[2], "base64url"));
+  if (!ok) throw new Error("bad_signature");
+  const iss = (payload.iss || "").replace(/^https?:\/\//, "");
+  if (iss !== "accounts.google.com") throw new Error("bad_iss");
+  if (GOOGLE_CLIENT_ID && payload.aud !== GOOGLE_CLIENT_ID) throw new Error("bad_aud");
+  if (!payload.exp || payload.exp * 1000 < Date.now()) throw new Error("expired");
+  if (payload.email && payload.email_verified === false) throw new Error("email_unverified");
+  return payload;
+}
 const TOURAPI_ENDPOINTS = [
   { svc: "KorService2", op: "searchFestival2" },
   { svc: "KorService1", op: "searchFestival1" }
@@ -407,6 +439,32 @@ const server = http.createServer(async (req, res) => {
     const u = sessionUser(req);
     if (!u) return send(res, 401, { error: "unauthorized" });
     return send(res, 200, { user: publicUser(u) });
+  }
+
+  if (url === "/api/config" && req.method === "GET") {
+    return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || "" });
+  }
+
+  if (url === "/api/google" && req.method === "POST") {
+    if (!GOOGLE_CLIENT_ID) return send(res, 400, { error: "google_not_configured" });
+    try {
+      const payload = await verifyGoogleToken(body.credential);
+      const email = (payload.email || "").trim().toLowerCase();
+      if (!email) return send(res, 401, { error: "google_failed" });
+      let u = Object.values(DB.users).find(x => x.email === email);
+      if (!u) {
+        const id = newId();
+        u = { id, email, name: payload.name || payload.given_name || "Google 사용자",
+              avatar: "🙂", google: true, sub: payload.sub, createdAt: Date.now() };
+        DB.users[id] = u;
+      }
+      const token = crypto.randomBytes(24).toString("hex");
+      DB.sessions[token] = { userId: u.id, createdAt: Date.now() };
+      saveDB();
+      return send(res, 200, { token, user: publicUser(u) });
+    } catch (e) {
+      return send(res, 401, { error: "google_failed" });
+    }
   }
 
   /* ---- festivals ---- */
