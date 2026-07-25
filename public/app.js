@@ -290,7 +290,7 @@ function setLang(l){
 
 /* ================= nav ================= */
 const NAV=["home","map","search","my","rank"];
-function go(view){
+function go(view,fromPop){
   document.querySelectorAll("section.view").forEach(s=>s.classList.remove("on"));
   document.getElementById("v-"+view).classList.add("on");
   document.querySelectorAll(".navlinks button, .navdrop button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-nav")===view));
@@ -300,7 +300,25 @@ function go(view){
   if(view==="search") renderSearch();
   if(view==="my") renderMy();
   if(view==="rank") renderRank();
+  route({view},fromPop);
 }
+/* ===== browser history (back / forward arrows) ===== */
+let _histInit=false;
+function route(state,fromPop){
+  if(fromPop) return;
+  try{
+    const url="#"+(state.t==="detail"?"festival-"+state.id:state.view);
+    if(!_histInit){ history.replaceState(state,"",url); _histInit=true; }
+    else history.pushState(state,"",url);
+  }catch(e){}
+}
+function goBack(){ if(_histInit) history.back(); else go("home"); }
+window.addEventListener("popstate",function(e){
+  if(document.getElementById("app").classList.contains("hidden")) return; // not in the app yet
+  const s=e.state;
+  if(s&&s.t==="detail"){ if(curDetail!==s.id) openDetail(s.id,true); }
+  else go((s&&s.view)||"home",true);
+});
 function cycleNav(){ const cur=document.querySelector("section.view.on").id.replace("v-",""); const i=NAV.indexOf(cur); go(NAV[(i+1)%NAV.length]); }
 /* mobile nav dropdown */
 function toggleNavMenu(e){ if(e) e.stopPropagation(); document.getElementById("navDrop").classList.toggle("open"); }
@@ -385,7 +403,6 @@ function pcard(f){
     ${has(f.id)?`<div class="stampwon">${f.stamp}</div>`:`<button class="iconbtn arw" onclick="event.stopPropagation();openDetail(${f.id})">${svg("i-arrow-ur")}</button>`}
     <div class="toptags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}${liveBadge(f)}</div>
     <h4>${tv(f.name)}</h4>
-    <p>${tv(f.desc)}</p>
     <div class="explore"><span>${t("explore")}</span><span class="go">${svg("i-arrow")}</span></div>
   </div>`;
 }
@@ -480,7 +497,7 @@ function renderSearch(){
 
 /* ================= DETAIL ================= */
 let curDetail=null, rvRating=5, rvSus=5;
-async function openDetail(id){
+async function openDetail(id,fromPop){
   curDetail=id; rvRating=5; rvSus=5;
   const f=FEST.find(x=>x.id===id);
   let reviews=[];
@@ -532,6 +549,7 @@ async function openDetail(id){
   document.getElementById("v-detail").classList.add("on");
   document.querySelectorAll(".navlinks button").forEach(b=>b.classList.remove("on"));
   window.scrollTo({top:0,behavior:"smooth"});
+  route({t:"detail",id},fromPop);
 }
 function reviewHTML(r){
   const colors=["#DEF24E","#2F9E62","#2E86C7","#F2B01E","#B26A2E"]; const nm=r.name||"";
