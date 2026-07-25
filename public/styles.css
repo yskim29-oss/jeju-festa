@@ -498,7 +498,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .btn-ghost{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 6px rgba(40,42,32,.09)}
 
 /* card surfaces: top light-catch + layered soft shadow */
-.inits,.newsletter,.metric,.dcard,.reward,.rankrow,.maplist,.review,.dhero,.pcard,.hero-photo,.authcard,.sheet-card,.stampcard{
+.inits,.newsletter,.metric,.dcard,.reward,.rankrow,.maplist,.review,.dhero,.pcard,.hero-photo,.sheet-card,.stampcard{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 10px 26px rgba(40,42,32,.10),0 2px 5px rgba(40,42,32,.06)}
 .hero-lime{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 10px rgba(140,150,40,.18),0 10px 28px rgba(150,170,40,.22)}
 .profile{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 10px rgba(140,150,40,.2),0 12px 26px rgba(160,175,45,.28)}
@@ -610,8 +610,8 @@ body.introlock{overflow:hidden}
 .ring-bg{stroke:rgba(0,0,0,.13)}
 .ring-fg{stroke:var(--ink);transition:stroke-dashoffset .9s var(--ease)}
 .ring-txt{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.ring-txt b{font-family:var(--display);font-size:30px;font-weight:800;color:var(--ink);line-height:1}
-.ring-txt span{font-size:11px;font-weight:800;color:var(--lime-ink);display:block;margin-top:2px}
+.ring-txt b{font-family:var(--display);font-size:29px;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em}
+.ring-txt span{position:absolute;left:0;right:0;top:64%;font-size:10.5px;font-weight:800;color:var(--lime-ink);text-align:center}
 .rewards2{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
 .rcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;display:flex;flex-direction:column;gap:11px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 8px 20px rgba(40,42,32,.07)}
@@ -671,4 +671,35 @@ body.introlock{overflow:hidden}
   .pod .pod-av{width:46px;height:46px;font-size:23px}
   .pod .pod-name{font-size:12px}
   .pod .pod-count{font-size:18px}
+}
+
+/* ============================================================
+   Intro polish + auth entrance animations
+   ============================================================ */
+.intro-progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:214;background:rgba(255,255,255,.14)}
+.intro-progress i{display:block;height:100%;width:0;background:var(--lime);box-shadow:0 0 12px var(--lime);transition:width .1s linear}
+#intro{transition:opacity .5s var(--ease),transform .5s var(--ease)}
+/* slow parallax drift on the panel content as you scroll */
+.ipanel .iwrap{transition:transform .5s var(--ease)}
+.intro-cta{box-shadow:0 0 0 0 rgba(222,242,78,.7);animation:ctapulse 2.4s ease-out infinite}
+@keyframes ctapulse{0%{box-shadow:0 0 0 0 rgba(222,242,78,.55)}70%{box-shadow:0 0 0 22px rgba(222,242,78,0)}100%{box-shadow:0 0 0 0 rgba(222,242,78,0)}}
+
+/* auth (start page) entrance */
+#auth .aside{animation:authslide .9s var(--ease) both}
+#auth .apanel{animation:authrise .8s var(--ease) both}
+@keyframes authslide{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes authrise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.authcard>*{opacity:0;animation:authfade .55s var(--ease) forwards}
+.authcard>*:nth-child(1){animation-delay:.18s}
+.authcard>*:nth-child(2){animation-delay:.25s}
+.authcard>*:nth-child(3){animation-delay:.32s}
+.authcard>*:nth-child(4){animation-delay:.39s}
+.authcard>*:nth-child(5){animation-delay:.46s}
+.authcard>*:nth-child(6){animation-delay:.53s}
+.authcard>*:nth-child(7){animation-delay:.60s}
+.authcard>*:nth-child(n+8){animation-delay:.66s}
+@keyframes authfade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  #auth .aside,#auth .apanel,.authcard>*{animation:none;opacity:1;transform:none}
+  .intro-cta{animation:none}
 }

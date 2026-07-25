@@ -116,7 +116,7 @@ const CATS=["eco","tradition","agri","leisure"];
 const AVATARS=["🧑‍🌾","🏄","🧗","🚴","👩‍🎨","🧑‍🚀","🐬","🌴"];
 const CATIMG={
   eco:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=60",
-  tradition:"https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=800&q=60",
+  tradition:"https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=800&q=60",
   agri:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=60",
   leisure:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60"
 };
@@ -135,7 +135,7 @@ const CATCOLOR={eco:"#2F9E62",tradition:"#B26A2E",agri:"#C9A227",leisure:"#2E86C
 /* ================= state ================= */
 let lang=localStorage.getItem("jf_lang")||"ko";
 let token=localStorage.getItem("jf_token")||null;
-let ME=null, FEST=[], curMonth=2, curYear=2026;
+let ME=null, FEST=[], curMonth=8, curYear=2025;   // default: autumn
 let catFilter="all", greenOnly=false, sortMode="date";
 let authMode="login", pickedAvatar="🧑‍🌾";
 let map=null, markers=[], mapTiles=null, mapTileLang=null;
@@ -226,6 +226,7 @@ async function enterApp(){
   document.getElementById("auth").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   const data=await api("/festivals"); FEST=data.festivals;
+  pickDefaultMonth();
   applyStatic(); updateHeader(); go("home");
   if(!window._festTimer) window._festTimer=setInterval(refreshFestivals, 300000); // live data every 5 min
 }
@@ -302,6 +303,16 @@ function sortList(list){ const m=sortMode; return list.slice().sort((a,b)=>{
   if(m==="name") return tv(a.name).localeCompare(tv(b.name),lang);
   return a.start.localeCompare(b.start); }); }
 function inMonth(f){ const a=dObj(f.start),b=dObj(f.end),cur=curYear*12+curMonth; return (a.y*12+a.m)<=cur && cur<=(b.y*12+b.m); }
+/* open the calendar on the autumn (Sep–Nov) month that has the most festivals */
+function pickDefaultMonth(){
+  let best={c:-1,m:8,y:2025};
+  [2025,2026].forEach(y=>[8,9,10].forEach(m=>{
+    const cur=y*12+m;
+    const c=FEST.filter(f=>{const a=dObj(f.start),b=dObj(f.end);return (a.y*12+a.m)<=cur&&cur<=(b.y*12+b.m);}).length;
+    if(c>best.c) best={c,m,y};
+  }));
+  curMonth=best.m; curYear=best.y;
+}
 function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;} renderHome(); }
 
 /* ================= HOME ================= */
@@ -755,28 +766,42 @@ function confetti(){
 }
 
 /* ================= INTRO ================= */
-let introObserver=null;
+let introObserver=null, introScrollFn=null;
 function showIntro(){
   const intro=document.getElementById("intro");
   intro.classList.remove("hidden");
+  intro.style.opacity=""; intro.style.transform="";
   document.body.classList.add("introlock");
   const sc=document.getElementById("introScroll"); if(sc) sc.scrollTop=0;
   const panels=[...document.querySelectorAll(".ipanel")];
   document.getElementById("introDots").innerHTML=panels.map((_,i)=>`<button aria-label="${i+1}" onclick="introGo(${i})"></button>`).join("");
   panels.forEach((p,i)=>p.classList.toggle("in",i===0));
   markDot(0);
+  const bar=document.querySelector(".intro-progress i"); if(bar) bar.style.width="0%";
   if(introObserver) introObserver.disconnect();
   introObserver=new IntersectionObserver(ents=>{
     ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); markDot(+e.target.dataset.i); } });
   },{root:sc,threshold:.55});
   panels.forEach(p=>introObserver.observe(p));
+  // scroll progress bar + subtle content parallax
+  if(introScrollFn) sc.removeEventListener("scroll",introScrollFn);
+  introScrollFn=()=>{
+    const max=sc.scrollHeight-sc.clientHeight;
+    if(bar) bar.style.width=(max?sc.scrollTop/max*100:0)+"%";
+    panels.forEach(p=>{ const off=(p.offsetTop-sc.scrollTop); const w=p.querySelector(".iwrap");
+      if(w) w.style.transform=`translateY(${Math.max(-40,Math.min(40,off*-0.05))}px)`; });
+  };
+  sc.addEventListener("scroll",introScrollFn,{passive:true});
 }
 function markDot(i){ document.querySelectorAll("#introDots button").forEach((b,j)=>b.classList.toggle("on",j===i)); }
 function introGo(i){ const p=document.querySelectorAll(".ipanel")[i]; if(p) p.scrollIntoView({behavior:"smooth"}); }
 function dismissIntro(){
-  document.getElementById("intro").classList.add("hidden");
+  const intro=document.getElementById("intro"), sc=document.getElementById("introScroll");
+  intro.style.opacity="0"; intro.style.transform="scale(1.05)";
+  setTimeout(()=>{ intro.classList.add("hidden"); },480);
   document.body.classList.remove("introlock");
   if(introObserver){ introObserver.disconnect(); introObserver=null; }
+  if(introScrollFn){ sc.removeEventListener("scroll",introScrollFn); introScrollFn=null; }
   localStorage.setItem("jf_intro_seen","1");
 }
 
