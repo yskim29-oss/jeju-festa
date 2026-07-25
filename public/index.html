@@ -31,6 +31,74 @@
 <g id="i-sun"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></g>
 </defs></svg>
 
+<!-- liquid-warp filter for intro headlines -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="warp"><feTurbulence type="fractalNoise" baseFrequency="0.010 0.018" numOctaves="2" seed="4" result="n">
+    <animate attributeName="baseFrequency" dur="16s" values="0.010 0.018;0.020 0.010;0.010 0.018" repeatCount="indefinite"/>
+  </feTurbulence>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</defs></svg>
+
+<!-- ============ INTRO (scroll-lock onboarding) ============ -->
+<div id="intro" class="hidden">
+  <button class="intro-skip" onclick="dismissIntro()"><span data-t="intro_skip"></span></button>
+  <div class="intro-dots" id="introDots"></div>
+  <div class="intro-scroll" id="introScroll">
+
+    <section class="ipanel" data-i="0" style="--img:url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=70')">
+      <div class="ibg"></div><div class="iscrim"></div>
+      <div class="iwrap">
+        <div class="ibadge" data-t="brand"></div>
+        <h1 class="ihero iwarp" data-t="intro_1_t" data-nl></h1>
+        <p class="isub" data-t="intro_1_s"></p>
+      </div>
+      <div class="iscroll-hint"><span data-t="intro_scroll"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-caret"/></svg></div>
+    </section>
+
+    <section class="ipanel" data-i="1" style="--img:url('https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=1600&q=70')">
+      <div class="ibg"></div><div class="iscrim"></div>
+      <div class="iwrap">
+        <div class="ikicker" data-t="intro_2_k"></div>
+        <h2 class="ititle" data-t="intro_2_t" data-nl></h2>
+        <p class="isub" data-t="intro_2_s"></p>
+      </div>
+    </section>
+
+    <section class="ipanel" data-i="2" style="--img:url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?auto=format&fit=crop&w=1600&q=70')">
+      <div class="ibg"></div><div class="iscrim"></div>
+      <div class="iwrap">
+        <div class="ikicker" data-t="intro_3_k"></div>
+        <h2 class="ititle ihuge iwarp" data-t="intro_3_t" data-nl></h2>
+        <p class="isub" data-t="intro_3_s"></p>
+      </div>
+    </section>
+
+    <section class="ipanel" data-i="3" style="--img:url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1600&q=70')">
+      <div class="ibg"></div><div class="iscrim"></div>
+      <div class="iwrap">
+        <div class="ikicker" data-t="intro_4_k"></div>
+        <h2 class="ititle" data-t="intro_4_t" data-nl></h2>
+        <div class="isteps">
+          <div class="istep"><span class="istep-n">01</span><span data-t="intro_step1"></span></div>
+          <div class="istep"><span class="istep-n">02</span><span data-t="intro_step2"></span></div>
+          <div class="istep"><span class="istep-n">03</span><span data-t="intro_step3"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ipanel ilast" data-i="4" style="--img:url('https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1600&q=70')">
+      <div class="ibg"></div><div class="iscrim"></div>
+      <div class="iwrap">
+        <h2 class="ititle ihuge iwarp" data-t="intro_5_t" data-nl></h2>
+        <p class="isub" data-t="intro_5_s"></p>
+        <button class="btn btn-lime intro-cta" onclick="dismissIntro()"><span data-t="intro_start"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
 <!-- ============ AUTH ============ -->
 <div id="auth">
   <div class="aside">
@@ -60,6 +128,7 @@
       <button class="btn btn-dark authbtn" id="authBtn"></button>
       <div class="authswitch"><span id="switchTxt"></span> <button id="switchBtn"></button></div>
       <div class="demohint"><span data-t="demo_hint"></span> <button id="demoBtn" data-t="demo_btn"></button></div>
+      <div class="demohint" style="margin-top:8px"><button onclick="showIntro()" data-t="intro_replay"></button></div>
     </div>
   </div>
 </div>
@@ -221,25 +290,7 @@
     <!-- ===== MY ===== -->
     <section id="v-my" class="view">
       <div class="sec-head"><h2 data-t="my_title"></h2></div>
-      <div class="mygrid">
-        <div class="profile">
-          <div class="pr">
-            <div class="pav" id="myAvatar"></div>
-            <div>
-              <div class="pname" id="myName"></div>
-              <div class="plvl"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><use href="#i-leaf"/></svg><span id="myLevel"></span></div>
-            </div>
-          </div>
-          <div class="prog"><i id="myProg"></i></div>
-          <div class="pmeta"><span id="myProgTxt"></span><span data-t="my_goal"></span></div>
-          <div class="slots light" id="mySlots" style="margin-top:22px"></div>
-        </div>
-        <div class="myright">
-          <div class="sectlabel" style="margin:0 0 4px"><svg class="icon" viewBox="0 0 24 24"><use href="#i-gift"/></svg><span data-t="my_rewards"></span></div>
-          <div id="rewardList"></div>
-          <button class="logoutbtn" id="logoutBtn"><svg class="icon" style="width:16px;height:16px;display:inline;vertical-align:-3px" viewBox="0 0 24 24"><use href="#i-logout"/></svg> <span data-t="logout"></span></button>
-        </div>
-      </div>
+      <div id="myBody"></div>
     </section>
 
     <!-- ===== RANK ===== -->

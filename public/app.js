@@ -1,5 +1,6 @@
 /* ================= i18n ================= */
 const STR = {
+  brand:{ko:"제주 축제 도장",en:"Jeju Festa Stamp"},
   ob_title:{ko:"제주와 자연을\n함께 지켜요",en:"Protecting Jeju &\nNature Together"},
   ob_desc:{ko:"제주의 지속가능한 축제를 다니며 방문 도장을 모으고, 제주 지도를 완성하는 스탬프 투어.",en:"A stamp tour: visit Jeju's sustainable festivals, collect check-in stamps, and complete your map."},
   members:{ko:"1.7만+ 명의 여행자와 함께",en:"17K+ travelers with us"},
@@ -47,7 +48,23 @@ const STR = {
   slot_hint:{ko:"5개를 모아 지도를 완성해요",en:"Collect 5 to complete the map"},
   tip_done:{ko:"방문완료",en:"Visited"},
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
-  my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표 5개",en:"Goal 5"},logout:{ko:"로그아웃",en:"Log out"},
+  my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표",en:"Goal"},logout:{ko:"로그아웃",en:"Log out"},
+  my_stamps:{ko:"내가 모은 도장",en:"My stamps"},
+  st_stamps:{ko:"모은 도장",en:"Stamps"},st_progress:{ko:"진행률",en:"Progress"},st_rank:{ko:"내 순위",en:"My rank"},
+  intro_skip:{ko:"건너뛰기",en:"Skip"},intro_scroll:{ko:"아래로 스크롤",en:"Scroll down"},intro_replay:{ko:"소개 다시 보기",en:"Watch the intro again"},intro_start:{ko:"시작하기",en:"Get started"},
+  intro_1_t:{ko:"제주의 축제를,\n지속가능하게",en:"Jeju's festivals,\nmade sustainable"},
+  intro_1_s:{ko:"제주 지속가능 축제 스탬프 투어에 오신 걸 환영해요.",en:"Welcome to the Jeju sustainable-festival stamp tour."},
+  intro_2_k:{ko:"왜 만들었나요",en:"Why we built it"},
+  intro_2_t:{ko:"축제는 많지만\n흩어져 있어요",en:"So many festivals,\nall scattered"},
+  intro_2_s:{ko:"제주엔 매년 수많은 축제가 열리지만 정보가 흩어져 있어 한 번 가고 마는 경우가 많아요. 한곳에 모으고, 여러 축제를 다니게 만들고 싶었어요.",en:"Jeju holds countless festivals each year, but the info is scattered and most people go just once. We wanted one place that gets you exploring many."},
+  intro_3_k:{ko:"우리의 목표",en:"Our mission"},
+  intro_3_t:{ko:"2040\n플라스틱 제로 제주",en:"2040\nPlastic-Free Jeju"},
+  intro_3_s:{ko:"다회용기 · 플로깅 · 로컬푸드 — 지속가능한 축제를 즐기며 함께 제주의 자연을 지켜요.",en:"Reusable cups, plogging, local food — enjoy sustainable festivals and protect Jeju's nature together."},
+  intro_4_k:{ko:"어떻게",en:"How it works"},
+  intro_4_t:{ko:"다니고, 인증하고,\n도장을 모아요",en:"Visit, check in,\ncollect stamps"},
+  intro_step1:{ko:"축제 찾기",en:"Find a festival"},intro_step2:{ko:"방문 인증",en:"Check in"},intro_step3:{ko:"지도 완성",en:"Complete the map"},
+  intro_5_t:{ko:"지금,\n지도를 완성하러 가요",en:"Now — go\ncomplete the map"},
+  intro_5_s:{ko:"5개의 도장을 모아 나만의 제주 지도를 완성하세요.",en:"Collect 5 stamps to complete your own map of Jeju."},
   rank_title:{ko:"랭킹",en:"Ranking"},rank_sub:{ko:"이번 시즌 도장을 가장 많이 모은 여행자들",en:"Top stamp collectors this season"},
   back:{ko:"뒤로",en:"Back"},
   all:{ko:"전체",en:"All"},eco:{ko:"생태·환경",en:"Eco"},tradition:{ko:"전통문화",en:"Tradition"},agri:{ko:"농수산물",en:"Local food"},leisure:{ko:"레저·체험",en:"Leisure"},
@@ -230,8 +247,8 @@ async function boot(){
   document.getElementById("authBtn").onclick=submitAuth;
   document.getElementById("switchBtn").onclick=()=>setAuthMode(authMode==="login"?"signup":"login");
   document.getElementById("demoBtn").onclick=demoLogin;
-  document.getElementById("logoutBtn").onclick=logout;
   document.getElementById("inPw").addEventListener("keydown",e=>{if(e.key==="Enter")submitAuth();});
+  if(!localStorage.getItem("jf_intro_seen")) showIntro();   // first-visit onboarding
   if(token){ try{ const d=await api("/me"); ME=d.user; await enterApp(); return; }catch(e){ token=null; localStorage.removeItem("jf_token"); } }
 }
 
@@ -239,7 +256,7 @@ async function boot(){
 function applyStatic(){
   document.querySelectorAll("[data-t]").forEach(el=>{
     const k=el.getAttribute("data-t");
-    if(k==="ob_title"||k==="hero_h1"){ el.innerHTML=nl2br(t(k)); }
+    if(el.hasAttribute("data-nl")||k==="ob_title"||k==="hero_h1"){ el.innerHTML=nl2br(t(k)); }
     else el.textContent=t(k);
   });
   document.querySelectorAll("[data-tph]").forEach(el=>el.placeholder=t(el.getAttribute("data-tph")));
@@ -646,18 +663,52 @@ function checkRewards(){
 
 /* ================= MY ================= */
 function renderMy(){
-  document.getElementById("myAvatar").textContent=ME.avatar||"🧑‍🌾";
-  document.getElementById("myName").textContent=ME.name||t("me");
   const n=stamps().length;
-  document.getElementById("myLevel").textContent=t(n>=5?"lvl5":n>=3?"lvl3":n>=1?"lvl1":"lvl0");
-  document.getElementById("myProg").style.width=Math.min(100,n/5*100)+"%";
-  document.getElementById("myProgTxt").textContent=`${n}/5`;
-  renderSlots("mySlots",false);
+  const lvl=t(n>=5?"lvl5":n>=3?"lvl3":n>=1?"lvl1":"lvl0");
+  const pct=Math.round(Math.min(100,n/5*100));
+  const C=326.73, off=C*(1-Math.min(1,n/5));
   const rewards=[{k:1,icon:"🏅",tt:"r1_t",dd:"r1_d"},{k:3,icon:"🎟️",tt:"r3_t",dd:"r3_d"},{k:5,icon:"🎁",tt:"r5_t",dd:"r5_d"}];
-  document.getElementById("rewardList").innerHTML=rewards.map(r=>{ const ok=n>=r.k;
-    return `<div class="reward ${ok?'unlocked':''}"><div class="ri">${r.icon}</div>
-      <div class="rt"><div class="rtitle">${t(r.tt)}</div><div class="rdesc">${t(r.dd)}</div></div>
-      <div class="rstat">${ok?t("unlocked"):t("locked")+" · "+r.k}</div></div>`; }).join("");
+  document.getElementById("myBody").innerHTML=`
+    <div class="my-hero">
+      <div class="mh-left">
+        <div class="mh-id">
+          <div class="mh-av">${ME.avatar||"🧑‍🌾"}</div>
+          <div>
+            <div class="mh-name">${esc(ME.name||t("me"))}</div>
+            <div class="mh-lvl">${svg("i-leaf")}${lvl}</div>
+          </div>
+        </div>
+        <div class="my-stats">
+          <div class="my-stat"><b>${n}</b><span>${t("st_stamps")}</span></div>
+          <div class="my-stat"><b>${pct}%</b><span>${t("st_progress")}</span></div>
+          <div class="my-stat"><b id="myRank">…</b><span>${t("st_rank")}</span></div>
+        </div>
+      </div>
+      <div class="ringwrap">
+        <svg class="ring" viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" cx="60" cy="60" r="52" style="stroke-dasharray:${C};stroke-dashoffset:${off}"/></svg>
+        <div class="ring-txt"><b>${n}/5</b><span>${t("my_goal")}</span></div>
+      </div>
+    </div>
+    <div class="sectlabel">${svg("i-medal")}${t("my_stamps")}</div>
+    <div class="slots light" id="mySlots"></div>
+    <div class="sectlabel">${svg("i-gift")}${t("my_rewards")}</div>
+    <div class="rewards2">${rewards.map(r=>{
+      const ok=n>=r.k, cur=Math.min(n,r.k), w=Math.round(cur/r.k*100);
+      return `<div class="rcard ${ok?'on':''}">
+        <div class="ric">${r.icon}</div>
+        <div class="rtt">${t(r.tt)}</div>
+        <div class="rdd">${t(r.dd)}</div>
+        <div class="rbar"><i style="width:${w}%"></i></div>
+        <div class="rstat2">${ok?svg("i-check","icon sm")+t("unlocked"):cur+" / "+r.k}</div>
+      </div>`; }).join("")}</div>
+    <button class="logoutbtn" onclick="logout()">${svg("i-logout","icon sm")} ${t("logout")}</button>`;
+  renderSlots("mySlots",false);
+  // fill rank async (no layout flash)
+  api("/leaderboard").then(d=>{
+    let b=d.leaderboard.slice(); if(!b.some(x=>x.userId===ME.id)) b.push({userId:ME.id,count:n});
+    b.sort((a,c)=>c.count-a.count);
+    const el=document.getElementById("myRank"); if(el) el.textContent="#"+(b.findIndex(x=>x.userId===ME.id)+1);
+  }).catch(()=>{ const el=document.getElementById("myRank"); if(el) el.textContent="-"; });
 }
 
 /* ================= RANK ================= */
@@ -666,12 +717,25 @@ async function renderRank(){
   try{ const d=await api("/leaderboard"); board=d.leaderboard; }catch(e){}
   if(!board.some(b=>b.userId===ME.id)) board.push({name:ME.name,avatar:ME.avatar,count:stamps().length,userId:ME.id});
   board.sort((a,b)=>b.count-a.count);
-  const medals=["🥇","🥈","🥉"];
-  document.getElementById("rankList").innerHTML=board.map((p,i)=>{ const me=p.userId===ME.id;
-    return `<div class="rankrow ${me?'me':''}"><span class="rk">${medals[i]||i+1}</span>
-      <div class="rav">${p.avatar||"🙂"}</div>
-      <span class="rname">${esc(p.name)}${me?`<span class="metag">${t("me")}</span>`:""}</span>
-      <span class="rcount">${p.count} ${svg("i-medal","icon")}</span></div>`; }).join("");
+  const max=Math.max(1,...board.map(b=>b.count));
+  const top=board.slice(0,3), rest=board.slice(3);
+  const medals=["🥇","🥈","🥉"], podCls=["pod1","pod2","pod3"];
+  const podium=top.length?`<div class="podium">${top.map((p,i)=>{ const me=p.userId===ME.id;
+    return `<div class="pod ${podCls[i]} ${me?'me':''}">
+      <div class="pod-medal">${medals[i]}</div>
+      <div class="pod-av">${p.avatar||"🙂"}</div>
+      <div class="pod-name">${esc(p.name)}${me?" · "+t("me"):""}</div>
+      <div class="pod-count">${p.count} ${svg("i-medal")}</div>
+    </div>`; }).join("")}</div>`:"";
+  const list=rest.length?`<div class="ranklist">${rest.map((p,i)=>{ const me=p.userId===ME.id, w=Math.round(p.count/max*100);
+    return `<div class="rrow ${me?'me':''}">
+      <span class="rr-k">${i+4}</span>
+      <div class="rr-av">${p.avatar||"🙂"}</div>
+      <div class="rr-main"><div class="rr-name">${esc(p.name)}${me?`<span class="metag">${t("me")}</span>`:""}</div>
+        <div class="rr-bar"><i style="width:${w}%"></i></div></div>
+      <span class="rr-count">${p.count} ${svg("i-medal")}</span>
+    </div>`; }).join("")}</div>`:"";
+  document.getElementById("rankList").innerHTML=podium+list;
 }
 
 /* ================= misc ================= */
@@ -688,6 +752,32 @@ function confetti(){
     const dx=(Math.random()-.5)*220, fall=window.innerHeight+40, dur=900+Math.random()*800;
     c.animate([{transform:`translateY(0) rotate(0)`,opacity:1},{transform:`translate(${dx}px,${fall}px) rotate(${Math.random()*720}deg)`,opacity:.9}],
       {duration:dur,easing:"cubic-bezier(.3,.6,.4,1)"}).onfinish=()=>c.remove(); }
+}
+
+/* ================= INTRO ================= */
+let introObserver=null;
+function showIntro(){
+  const intro=document.getElementById("intro");
+  intro.classList.remove("hidden");
+  document.body.classList.add("introlock");
+  const sc=document.getElementById("introScroll"); if(sc) sc.scrollTop=0;
+  const panels=[...document.querySelectorAll(".ipanel")];
+  document.getElementById("introDots").innerHTML=panels.map((_,i)=>`<button aria-label="${i+1}" onclick="introGo(${i})"></button>`).join("");
+  panels.forEach((p,i)=>p.classList.toggle("in",i===0));
+  markDot(0);
+  if(introObserver) introObserver.disconnect();
+  introObserver=new IntersectionObserver(ents=>{
+    ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); markDot(+e.target.dataset.i); } });
+  },{root:sc,threshold:.55});
+  panels.forEach(p=>introObserver.observe(p));
+}
+function markDot(i){ document.querySelectorAll("#introDots button").forEach((b,j)=>b.classList.toggle("on",j===i)); }
+function introGo(i){ const p=document.querySelectorAll(".ipanel")[i]; if(p) p.scrollIntoView({behavior:"smooth"}); }
+function dismissIntro(){
+  document.getElementById("intro").classList.add("hidden");
+  document.body.classList.remove("introlock");
+  if(introObserver){ introObserver.disconnect(); introObserver=null; }
+  localStorage.setItem("jf_intro_seen","1");
 }
 
 boot();
