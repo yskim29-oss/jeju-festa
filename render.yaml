@@ -1,0 +1,14 @@
+# One-click deploy blueprint for Render (https://render.com)
+# In Render: New → Blueprint → connect this repo. Then set the two env vars below.
+services:
+  - type: web
+    name: jeju-festa
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        sync: false     # paste your OAuth client id in the Render dashboard
+      - key: TOURAPI_KEY
+        sync: false     # paste your data.go.kr TourAPI key in the Render dashboard

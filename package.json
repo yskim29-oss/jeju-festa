@@ -1,0 +1,12 @@
+{
+  "name": "jeju-festa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jeju Festa Stamp — sustainable-festival stamp tour",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
