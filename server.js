@@ -335,7 +335,8 @@ async function refreshLive(){
         LIVE = items
           .filter(x => x.contentid && x.mapx && x.mapy && x.title)
           .map(mapLive)
-          .filter(f => !curated.has(normTitle(f.name.ko)));   // drop duplicates of curated ones
+          .filter(f => !curated.has(normTitle(f.name.ko)))    // drop duplicates of curated ones
+          .filter(f => f.end >= "2026-01-01");                // take out past (2025 and earlier) festivals
         liveFetchedAt = Date.now();
         console.log(`TourAPI(${ep.op}): loaded ${LIVE.length} live 제주 festivals`);
         return;

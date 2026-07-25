@@ -75,6 +75,7 @@ const STR = {
   rating:{ko:"평점",en:"Rating"},sustainability:{ko:"지속가능 체감도",en:"Sustainability"},
   sus_points:{ko:"지속가능 포인트",en:"Sustainability highlights"},reviews:{ko:"리뷰",en:"Reviews"},
   event_info:{ko:"행사 정보",en:"Event info"},official_site:{ko:"공식 홈페이지",en:"Official site"},
+  web_search:{ko:"웹에서 찾아보기",en:"Look it up online"},about_festival:{ko:"축제 소개",en:"About the festival"},
   when:{ko:"기간",en:"When"},where:{ko:"장소",en:"Where"},verify_method:{ko:"인증 방법",en:"Check-in"},
   write_review:{ko:"리뷰 남기기",en:"Write a review"},rv_rating:{ko:"평점",en:"Rating"},rv_sus:{ko:"지속가능 체감도",en:"Sustainability"},
   rv_placeholder:{ko:"축제는 어땠나요? (선택)",en:"How was it? (optional)"},rv_submit:{ko:"리뷰 등록",en:"Post review"},rv_thanks:{ko:"리뷰 고마워요!",en:"Thanks for the review!"},
@@ -132,6 +133,10 @@ const FIMG={ // signature overrides by festival id
 };
 function festImg(f){ return (f&&f.img)||(f&&FIMG[f.id])||(f&&CATIMG[f.cat])||CATIMG.eco; }
 function liveBadge(f){ return f&&f.live?`<span class="tagpill live">● LIVE</span>`:""; }
+function festLink(f){
+  if(f&&f.homepage) return {url:f.homepage, label:t("official_site")};
+  return {url:"https://search.naver.com/search.naver?query="+encodeURIComponent("제주 "+tv(f.name)+" 축제"), label:t("web_search")};
+}
 const CATCOLOR={eco:"#2F9E62",tradition:"#B26A2E",agri:"#C9A227",leisure:"#2E86C7"};
 
 /* ================= state ================= */
@@ -500,18 +505,21 @@ async function openDetail(id){
           <div class="metric"><div class="big" style="color:var(--star)">★ ${f.ratingAvg.toFixed(1)}</div><div class="lab">${t("rating")}</div></div>
           <div class="metric"><div class="big" style="color:var(--green)">♻ ${f.susAvg.toFixed(1)}</div><div class="lab">${t("sustainability")}</div></div>
         </div>
+        ${f.info&&Object.keys(f.info).length?`<div class="dcard">
+          <div class="infohd">${svg("i-flag")}${t("event_info")}</div>
+          <div class="infolist">${Object.entries(f.info).map(([k,v])=>`<div class="inforow"><span class="ik">${esc(k)}</span><span class="iv">${nl2br(v)}</span></div>`).join("")}</div>
+        </div>`:""}
         ${tv(f.sus).length?`<div class="dcard">
-          <div style="font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:10px">♻ ${t("sus_points")}</div>
+          <div class="infohd">${svg("i-leaf")}${t("sus_points")}</div>
           <div class="susbox"><ul>${tv(f.sus).map(s=>`<li>${s}</li>`).join("")}</ul></div>
         </div>`:""}
+        <a class="weblink" href="${esc(festLink(f).url)}" target="_blank" rel="noopener noreferrer">${svg("i-arrow-ur","icon sm")}${festLink(f).label}</a>
       </div>
     </div>
-    <p style="font-size:15px;line-height:1.7;color:var(--ink-2);margin:20px 0 0;max-width:680px">${nl2br(tv(f.desc))}</p>
-    ${f.info&&Object.keys(f.info).length?`<div class="dcard infocard">
-      <div class="infohd">${svg("i-flag")}${t("event_info")}</div>
-      <div class="infolist">${Object.entries(f.info).map(([k,v])=>`<div class="inforow"><span class="ik">${esc(k)}</span><span class="iv">${nl2br(v)}</span></div>`).join("")}</div>
-      ${f.homepage?`<a class="hplink" href="${esc(f.homepage)}" target="_blank" rel="noopener noreferrer">${svg("i-arrow-ur","icon sm")}${t("official_site")}</a>`:""}
-    </div>`:""}
+    <div class="dcard ddesc">
+      <div class="infohd">${svg("i-clock")}${t("about_festival")}</div>
+      <p>${nl2br(tv(f.desc))||"—"}</p>
+    </div>
     <div class="sectlabel">${svg("i-star")}${t("reviews")} (${reviews.length})</div>
     <div id="reviewList">${reviews.map(reviewHTML).join("")||`<div class="empty" style="padding:24px">—</div>`}</div>
     ${done?reviewFormHTML():""}
