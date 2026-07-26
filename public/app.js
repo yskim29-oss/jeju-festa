@@ -110,7 +110,8 @@ const STR = {
   cam_denied:{ko:"카메라를 사용할 수 없어요. 아래에 코드를 직접 입력하세요.",en:"Camera unavailable. Enter the code below."},
   qr_or:{ko:"또는 코드 직접 입력",en:"or enter the code"},
   qr_demo_hint:{ko:"데모: 이 축제의 코드는 {code} 입니다.",en:"Demo: this festival's code is {code}."},
-  confirm:{ko:"확인",en:"Confirm"},cancel:{ko:"취소",en:"Cancel"},
+  confirm:{ko:"확인",en:"Confirm"},cancel:{ko:"취소",en:"Cancel"},close:{ko:"닫기",en:"Close"},
+  cal_hint:{ko:"날짜를 눌러 그날의 축제를 확인하세요",en:"Tap a date to see that day's festivals"},
   geo_intro:{ko:"버튼을 눌러 현재 위치로 인증하세요.",en:"Tap the button to verify your location."},
   geo_locate:{ko:"내 위치 확인하기",en:"Check my location"},
   geo_locating:{ko:"위치 확인 중…",en:"Locating…"},
@@ -430,11 +431,35 @@ function renderCalendar(){
       return `<button class="cal-ev${got?' got':''}${isStart?' start':''}${isEnd?' end':''}" style="--c:${CATCOLOR[f.cat]}" title="${esc(tv(f.name))} · ${esc(fmtRange(f))}" onclick="event.stopPropagation();openDetail(${f.id})">${isStart?esc(tv(f.name)):"&nbsp;"}</button>`;
     }).join("");
     const more=fs.length>3?`<span class="cal-more">+${fs.length-3}</span>`:"";
-    cells+=`<div class="cal-cell${fs.length?' has':''}${isToday?' today':''}${dow===0?' sun':''}${dow===6?' sat':''}">`+
-      `<span class="cal-d">${d}</span>${chips}${more}</div>`;
+    const tap=fs.length?` onclick="openCalDay(${y},${m},${d})"`:"";
+    const dot=fs.length?`<span class="cal-dot" aria-hidden="true">${fs.length}</span>`:"";
+    cells+=`<div class="cal-cell${fs.length?' has':''}${isToday?' today':''}${dow===0?' sun':''}${dow===6?' sat':''}"${tap}>`+
+      `<span class="cal-d">${d}</span>${dot}${chips}${more}</div>`;
   }
-  wrap.innerHTML=`<div class="cal-head">${head}</div><div class="cal-grid">${cells}</div>`;
+  wrap.innerHTML=`<div class="cal-head">${head}</div><div class="cal-grid">${cells}</div>`+
+    `<div class="cal-hint">${svg("i-arrow-ur","icon sm")}<span>${t("cal_hint")}</span></div>`;
 }
+/* tap a calendar day -> bottom sheet listing that day's festivals */
+function openCalDay(y,m,d){
+  const fs=festsOnDay(y,m,d);
+  if(!fs.length) return;
+  const wdArr=lang==="ko"?["일","월","화","수","목","금","토"]:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const wd=wdArr[new Date(y,m,d).getDay()];
+  const dateLabel=lang==="ko"?`${m+1}월 ${d}일 (${wd})`:`${MON.en[m]} ${d}, ${y} · ${wd}`;
+  const rows=fs.map(f=>`<button class="cday-ev" onclick="closeCalDay();openDetail(${f.id})">
+      <span class="cday-thumb"><img src="${festImg(f)}" alt="" onerror="this.style.visibility='hidden'"></span>
+      <span class="cday-main"><span class="cday-name">${esc(tv(f.name))}</span>
+        <span class="cday-meta"><span class="tagpill ${f.cat}">${t(f.cat)}</span><span class="cday-date">${esc(fmtRange(f))}</span>${f.green?`<span class="tagpill lime">♻</span>`:""}</span></span>
+      <span class="cday-go">${svg("i-arrow-ur","icon sm")}</span>
+    </button>`).join("");
+  document.getElementById("calDayCard").innerHTML=`<div class="sheet-grab"></div>
+    <div class="sheet-head"><div class="mi">${svg("i-clock")}</div>
+      <div><h3>${dateLabel}</h3><p>${tv({ko:`${fs.length}개의 축제가 열려요`,en:`${fs.length} festival${fs.length===1?"":"s"} on`})}</p></div></div>
+    <div class="cday-list">${rows}</div>
+    <div class="sheet-actions"><button class="btn btn-ghost" onclick="closeCalDay()">${t("close")}</button></div>`;
+  document.getElementById("calDaySheet").classList.add("show");
+}
+function closeCalDay(){ document.getElementById("calDaySheet").classList.remove("show"); }
 function initRow(f){
   return `<div class="init-row ${has(f.id)?'done':''}" onclick="openDetail(${f.id})">
     <div class="tt">${tv(f.name)}<small>${tv(f.loc)}</small></div>

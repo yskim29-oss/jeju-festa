@@ -743,8 +743,13 @@ body.introlock{overflow:hidden}
 .cal-grid{gap:6px}
 .cal-cell{min-height:88px;border-radius:var(--r-sm);background:var(--card-2);padding:6px;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden}
 .cal-cell.empty{background:transparent}
-.cal-cell.has{background:#FbFcF4;border:1px solid var(--line)}
+.cal-cell.has{background:#FbFcF4;border:1px solid var(--line);cursor:pointer;transition:transform var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.cal-cell.has:hover{box-shadow:var(--sh-sm);transform:translateY(-1px)}
+.cal-cell.has:active{transform:scale(.97)}
 .cal-cell.today{outline:2px solid var(--lime-d);outline-offset:-2px}
+.cal-dot{display:none;position:absolute;top:5px;right:5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--lime);color:var(--lime-ink);font-size:10.5px;font-weight:800;align-items:center;justify-content:center;line-height:1}
+.cal-hint{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;color:var(--muted);font-size:12.5px;font-weight:600}
+.cal-hint .icon{color:var(--muted)}
 .cal-d{font-size:12px;font-weight:700;color:var(--ink-2);line-height:1.1}
 .cal-cell.sun .cal-d{color:#D7574B}.cal-cell.sat .cal-d{color:#2E86C7}
 .cal-ev{display:block;width:100%;text-align:left;font-size:11px;font-weight:700;line-height:1.25;color:#fff;background:var(--c);border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:var(--sh-sm);transition:transform var(--dur) var(--ease),filter var(--dur) var(--ease)}
@@ -753,11 +758,15 @@ body.introlock{overflow:hidden}
 .cal-ev.got{outline:2px solid var(--lime);outline-offset:-2px}
 .cal-more{font-size:10px;font-weight:700;color:var(--muted);padding-left:4px}
 @media (max-width:680px){
-  .cal-cell{min-height:64px;padding:4px}
-  .cal-ev.start{font-size:0;padding:0;height:6px;border-radius:99px}
+  .cal-cell{min-height:58px;padding:5px 4px 4px}
+  .cal-ev{font-size:0;padding:0;height:5px;border-radius:99px;margin-top:0}
+  .cal-ev:not(.start){opacity:1}
+  .cal-more{display:none}
+  .cal-dot{display:inline-flex}
   .cal-d{font-size:11px}
   .calwrap{padding:10px}
   .cal-head,.cal-grid{gap:4px}
+  .cal-hint{font-size:11.5px;margin-top:10px}
 }
 
 /* ---------- ranking countdown ---------- */
@@ -773,4 +782,41 @@ body.introlock{overflow:hidden}
   .cd-segs{gap:5px}
   .cd-seg{min-width:44px;padding:7px 3px}
   .cd-seg b{font-size:18px}
+}
+
+/* ---------- calendar day sheet ---------- */
+.cday-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.cday-ev{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px;transition:transform var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+.cday-ev:hover{border-color:var(--ink);transform:translateY(-1px)}
+.cday-thumb{width:58px;height:58px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:var(--line)}
+.cday-thumb img{width:100%;height:100%;object-fit:cover}
+.cday-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.cday-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cday-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cday-date{font-size:12.5px;color:var(--muted);font-weight:600}
+.cday-go{color:var(--muted);flex:0 0 auto}
+
+/* ---------- bug report card ---------- */
+.bugcard{position:relative;overflow:hidden;background:var(--ink);color:#fff;border-radius:var(--r-xl);padding:42px;margin-top:50px;box-shadow:var(--sh-lg)}
+.bug-glow{position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(222,242,78,.34),transparent 62%);top:-150px;right:-130px;pointer-events:none}
+.bug-inner{position:relative;display:grid;grid-template-columns:1fr 1.1fr;gap:36px;align-items:center}
+.bug-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(222,242,78,.14);color:var(--lime);border:1px solid rgba(222,242,78,.32);padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.bug-title{font-size:30px;line-height:1.12;margin:18px 0 0;color:#fff;font-weight:700;letter-spacing:-.02em}
+.bug-sub{color:rgba(255,255,255,.62);font-size:14.5px;line-height:1.55;margin-top:12px;max-width:420px}
+.bug-form{display:flex;flex-direction:column;gap:12px}
+.bug-field textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-md);padding:15px 16px;color:#fff;font:inherit;font-size:14.5px;outline:none;resize:vertical;min-height:100px;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.bug-field textarea::placeholder{color:rgba(255,255,255,.4)}
+.bug-field textarea:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(222,242,78,.2)}
+.bug-row{display:flex;gap:10px;flex-wrap:wrap}
+.bug-row input{flex:1;min-width:180px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:13px 18px;color:#fff;font:inherit;font-size:14px;outline:none;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.bug-row input::placeholder{color:rgba(255,255,255,.4)}
+.bug-row input:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(222,242,78,.2)}
+.bug-btn{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:var(--lime-ink);border-radius:999px;padding:13px 22px;font-weight:700;font-size:14.5px;white-space:nowrap;transition:transform var(--dur) var(--ease),background var(--dur) var(--ease)}
+.bug-btn:hover{background:var(--lime-d);transform:translateY(-1px)}
+.bug-btn .icon{width:18px;height:18px}
+@media (max-width:720px){
+  .bugcard{padding:28px}
+  .bug-inner{grid-template-columns:1fr;gap:22px}
+  .bug-title{font-size:23px}
+  .bug-glow{top:-170px;right:-150px}
 }
