@@ -380,7 +380,26 @@ function pickDefaultMonth(){
 function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;} renderHome(); }
 
 /* ================= HOME ================= */
-function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); }
+function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); animateHomeIn(); }
+/* home entrance + scroll-reveal animations.
+   Elements are visible by default; `.in` (added by the observer as they approach the viewport)
+   triggers the entrance keyframe. Fling-past or observer-less cases just leave content visible. */
+function animateHomeIn(){
+  const home=document.getElementById("v-home"); if(!home) return;
+  if(!home.dataset.entered){ home.dataset.entered="1"; const hero=home.querySelector(".hero"); if(hero) hero.classList.add("enter"); }
+  home.querySelectorAll(".greener, .protect .pblock, .sec-head, .controls, #calWrap, .inits, #pcards, .bugcard").forEach(el=>el.classList.add("reveal"));
+  revealObserve();
+}
+function revealObserve(){
+  const els=document.querySelectorAll("#v-home .reveal:not(.in)");
+  if(!("IntersectionObserver" in window)){ els.forEach(e=>e.classList.add("in")); return; }
+  if(!window._revObs){
+    window._revObs=new IntersectionObserver((ents,obs)=>{
+      ents.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add("in"); obs.unobserve(en.target); } });
+    },{rootMargin:"0px 0px -12% 0px",threshold:0.05});
+  }
+  els.forEach(e=>window._revObs.observe(e));
+}
 function buildFilters(elId,cb){
   const w=document.getElementById(elId); if(!w) return; w.innerHTML="";
   const mk=(key,label,cls="")=>{ const b=document.createElement("button");
