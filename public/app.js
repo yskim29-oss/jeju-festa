@@ -26,6 +26,7 @@ const STR = {
   hero_h1:{ko:"자연을 지키고\n축제를 즐겨요.",en:"Save Nature,\nEnjoy Festivals."},
   hero_email:{ko:"이메일을 입력하세요",en:"Enter your e-mail"},
   subscribe:{ko:"구독",en:"Subscribe"},
+  hero_cta:{ko:"축제 지도 보기",en:"Explore the map"},
   hero_chip:{ko:"우리와 함께한 여행자들",en:"Our volunteers"},
   hero_social:{ko:"소셜에서 만나요",en:"Find us on social"},
   hero_cap:{ko:"제주의 자연과 축제를 함께 지켜가는 여행자 커뮤니티입니다.",en:"A traveler community protecting Jeju's nature & festivals."},
@@ -45,6 +46,16 @@ const STR = {
   subscribed:{ko:"구독 완료! 고마워요 🌿",en:"Subscribed! Thank you 🌿"},
   sub_invalid:{ko:"이메일 주소를 확인해주세요",en:"Please check your email address"},
   sub_failed:{ko:"잠시 후 다시 시도해주세요",en:"Something went wrong — please try again"},
+  report_eyebrow:{ko:"버그 신고",en:"report a bug"},
+  report_title:{ko:"버그를 발견하셨나요? 알려주세요.",en:"Found a bug? Let us know."},
+  report_sub:{ko:"이상한 점이나 개선 아이디어를 자유롭게 남겨주세요. 개발자에게 바로 전달됩니다.",en:"Tell us anything broken or any idea to improve — it goes straight to the developer."},
+  report_ph:{ko:"무엇이 잘못됐는지 알려주세요…",en:"Describe what went wrong…"},
+  report_email_ph:{ko:"회신 받을 이메일 (선택)",en:"Your email for a reply (optional)"},
+  report_btn:{ko:"신고 보내기",en:"Send report"},
+  report_sent:{ko:"신고 접수 완료! 감사합니다 🙏",en:"Report sent! Thank you 🙏"},
+  report_empty:{ko:"내용을 입력해주세요",en:"Please enter a message"},
+  cd_ends:{ko:"이번 시즌 종료까지",en:"Season resets in"},
+  cd_week:{ko:"주",en:"wk"},cd_day:{ko:"일",en:"d"},cd_hour:{ko:"시간",en:"hr"},cd_min:{ko:"분",en:"min"},cd_sec:{ko:"초",en:"sec"},
 
   map_title:{ko:"제주 지도 완성하기",en:"Complete your Jeju map"},
   map_sub:{ko:"핀을 눌러 축제로 이동하고 방문 인증하세요",en:"Tap a pin to open a festival & check in"},
@@ -301,7 +312,7 @@ function go(view,fromPop){
   if(view==="map") renderMap();
   if(view==="search") renderSearch();
   if(view==="my") renderMy();
-  if(view==="rank") renderRank();
+  if(view==="rank") renderRank(); else stopRankCountdown();
   route({view},fromPop);
 }
 /* ===== browser history (back / forward arrows) ===== */
@@ -845,18 +856,37 @@ async function renderRank(){
       <span class="rr-count">${p.count} ${svg("i-medal")}</span>
     </div>`; }).join("")}</div>`:"";
   document.getElementById("rankList").innerHTML=podium+list;
+  startRankCountdown();
+}
+/* live monthly countdown until the season resets (1st of next month) */
+let rankCdTimer=null;
+function stopRankCountdown(){ if(rankCdTimer){ clearInterval(rankCdTimer); rankCdTimer=null; } }
+function startRankCountdown(){
+  const el=document.getElementById("rankCd"); if(!el) return;
+  el.hidden=false;
+  const seg=(v,label)=>`<div class="cd-seg"><b>${String(v).padStart(2,"0")}</b><span>${label}</span></div>`;
+  function tick(){
+    if(!document.getElementById("rankCd")){ stopRankCountdown(); return; }
+    const now=new Date();
+    const next=new Date(now.getFullYear(),now.getMonth()+1,1,0,0,0,0);
+    const sec=Math.max(0,Math.floor((next-now)/1000));
+    const w=Math.floor(sec/604800), d=Math.floor((sec%604800)/86400), h=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    el.innerHTML=`<div class="cd-lab">${svg("i-clock","icon sm")}<span>${t("cd_ends")}</span></div>`+
+      `<div class="cd-segs">${seg(w,t("cd_week"))}${seg(d,t("cd_day"))}${seg(h,t("cd_hour"))}${seg(m,t("cd_min"))}${seg(s,t("cd_sec"))}</div>`;
+  }
+  stopRankCountdown(); tick(); rankCdTimer=setInterval(tick,1000);
 }
 
 /* ================= misc ================= */
-async function subscribe(e,form){
+async function submitReport(e,form){
   e.preventDefault();
-  const input=form.querySelector('input[type="email"]');
-  const email=(input&&input.value||"").trim();
-  if(!email) return false;
+  const message=(form.querySelector('[name="message"]').value||"").trim();
+  const email=(form.querySelector('[name="email"]').value||"").trim();
+  if(message.length<3){ toast(t("report_empty")); return false; }
   const btn=form.querySelector('button'); if(btn) btn.disabled=true;
   try{
-    await api("/subscribe",{method:"POST",body:JSON.stringify({email})});
-    form.reset(); toast(t("subscribed"));
+    await api("/report",{method:"POST",body:JSON.stringify({message,email})});
+    form.reset(); toast(t("report_sent"));
   }catch(err){
     toast(err&&err.error==="invalid_email"?t("sub_invalid"):t("sub_failed"));
   }finally{ if(btn) btn.disabled=false; }

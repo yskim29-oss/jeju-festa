@@ -19,37 +19,44 @@ const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "")
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
 const DB_KEY = "jeju:db";
-const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [] });
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [] });
 
-/* ---- newsletter delivery ---- */
-// Every newsletter signup is stored in the DB and (best-effort) emailed to the owner.
-const NEWSLETTER_TO = process.env.NEWSLETTER_TO || "yunseongkim@jejufesta.online";
+/* ---- owner email delivery ---- */
+// Bug reports are stored in the DB and (best-effort) emailed to the owner.
+const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.NEWSLETTER_TO || "yunseongkim@jejufesta.online";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 // If no RESEND key is configured, fall back to FormSubmit (a free form->email relay,
-// no API key needed; the target address must confirm it once). Set NEWSLETTER_RELAY="off" to disable.
-const NEWSLETTER_RELAY = process.env.NEWSLETTER_RELAY || "formsubmit";
-async function notifySubscription(email) {
-  const subject = "제주 축제 도장 · 새 뉴스레터 구독";
-  const text = `새로운 뉴스레터 구독자가 있습니다.\n\n이메일: ${email}\n시간: ${new Date().toISOString()}\n\n— jejufesta.online`;
+// no API key needed; the target address must confirm it once). Set OWNER_MAIL_RELAY="off" to disable.
+const OWNER_MAIL_RELAY = process.env.OWNER_MAIL_RELAY || process.env.NEWSLETTER_RELAY || "formsubmit";
+async function sendOwnerMail(subject, text, replyTo) {
   try {
     if (RESEND_API_KEY) {
+      const payload = { from: "Jeju Festa <noreply@jejufesta.online>", to: [OWNER_EMAIL], subject, text };
+      if (replyTo) payload.reply_to = replyTo;
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: "Jeju Festa <newsletter@jejufesta.online>", to: [NEWSLETTER_TO], reply_to: email, subject, text }),
+        body: JSON.stringify(payload),
       });
-      if (!r.ok) console.log("newsletter (resend) failed:", r.status, await r.text());
+      if (!r.ok) console.log("ownermail (resend) failed:", r.status, await r.text());
       return;
     }
-    if (NEWSLETTER_RELAY !== "off") {
-      const r = await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(NEWSLETTER_TO), {
+    if (OWNER_MAIL_RELAY !== "off") {
+      const body = { _subject: subject, message: text, _template: "table" };
+      if (replyTo) body.email = replyTo;
+      const r = await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(OWNER_EMAIL), {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ email, _subject: subject, message: text, _template: "table" }),
+        body: JSON.stringify(body),
       });
-      if (!r.ok) console.log("newsletter (formsubmit) failed:", r.status);
+      if (!r.ok) console.log("ownermail (formsubmit) failed:", r.status);
     }
-  } catch (e) { console.log("newsletter notify error:", e.message); }
+  } catch (e) { console.log("ownermail notify error:", e.message); }
+}
+function notifyReport(message, email) {
+  const subject = "제주 축제 도장 · 🐞 버그 신고";
+  const text = `새로운 버그 신고가 접수되었습니다.\n\n내용:\n${message}\n\n회신 이메일: ${email || "(미입력)"}\n시간: ${new Date().toISOString()}\n\n— jejufesta.online`;
+  return sendOwnerMail(subject, text, email || undefined);
 }
 
 async function redisGet(key) {
@@ -555,15 +562,17 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { user: publicUser(u) });
   }
 
-  /* ---- newsletter subscribe ---- */
-  if (url === "/api/subscribe" && req.method === "POST") {
+  /* ---- bug report ---- */
+  if (url === "/api/report" && req.method === "POST") {
+    const message = (body.message || "").trim();
     const email = (body.email || "").trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: "invalid_email" });
-    if (!Array.isArray(DB.subscribers)) DB.subscribers = [];
-    const already = DB.subscribers.some(s => s.email === email);
-    if (!already) { DB.subscribers.push({ email, ts: Date.now() }); saveDB(); }
-    notifySubscription(email); // best-effort, don't block the response
-    return send(res, 200, { ok: true, already });
+    if (message.length < 3) return send(res, 400, { error: "empty_report" });
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: "invalid_email" });
+    if (!Array.isArray(DB.reports)) DB.reports = [];
+    DB.reports.push({ message: message.slice(0, 2000), email, ts: Date.now(), ua: (req.headers["user-agent"] || "").slice(0, 200) });
+    saveDB();
+    notifyReport(message, email); // best-effort, don't block the response
+    return send(res, 200, { ok: true });
   }
 
   if (url === "/api/config" && req.method === "GET") {

@@ -184,10 +184,9 @@
         <div class="hero-lime">
           <span class="eyebrow" data-t="hero_eyebrow"></span>
           <h1 id="heroH1"></h1>
-          <form class="subscribe" onsubmit="return subscribe(event,this)">
-            <input type="email" data-tph="hero_email" required>
-            <button class="btn btn-dark btn-sm" type="submit"><span data-t="subscribe"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
-          </form>
+          <div class="hero-cta">
+            <button class="btn btn-dark btn-sm" onclick="go('map')"><span data-t="hero_cta"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          </div>
           <div class="members">
             <div class="avatars"><span>🐬</span><span>🏄</span><span>🧗</span></div>
             <small data-t="members"></small>
@@ -257,19 +256,22 @@
       <div class="pcards" id="pcards"></div>
 
       <div class="newsletter">
-        <span class="eyebrow" data-t="newsletter"></span>
+        <span class="eyebrow" data-t="report_eyebrow"></span>
         <div>
-          <h3 data-t="nl_title"></h3>
-          <form class="nl-form" onsubmit="return subscribe(event,this)">
-            <input type="email" data-tph="f_email" required>
-            <button class="btn btn-dark btn-sm" type="submit"><span data-t="subscribe"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          <h3 data-t="report_title"></h3>
+          <p class="nl-desc" data-t="report_sub"></p>
+          <form class="report-form" onsubmit="return submitReport(event,this)">
+            <textarea name="message" rows="3" data-tph="report_ph" required></textarea>
+            <div class="report-row">
+              <input type="email" name="email" data-tph="report_email_ph">
+              <button class="btn btn-dark btn-sm" type="submit"><span data-t="report_btn"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+            </div>
           </form>
         </div>
       </div>
 
       <div class="footer">
         <span>©2026 제주 축제 도장 · All rights reserved</span>
-        <div class="socials"><a>Facebook</a><a>Twitter</a><a>Instagram</a></div>
       </div>
     </section>
 
@@ -318,6 +320,7 @@
     <!-- ===== RANK ===== -->
     <section id="v-rank" class="view">
       <div class="sec-head"><h2 data-t="rank_title"></h2><p data-t="rank_sub"></p></div>
+      <div class="rankcd" id="rankCd" hidden></div>
       <div id="rankList"></div>
     </section>
 
