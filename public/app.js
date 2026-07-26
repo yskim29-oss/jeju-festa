@@ -43,6 +43,8 @@ const STR = {
   newsletter:{ko:"뉴스레터",en:"newsletter"},
   nl_title:{ko:"뉴스레터를 구독하고 축제·프로젝트 소식을 받아보세요.",en:"Subscribe to get the latest festivals, projects & initiatives."},
   subscribed:{ko:"구독 완료! 고마워요 🌿",en:"Subscribed! Thank you 🌿"},
+  sub_invalid:{ko:"이메일 주소를 확인해주세요",en:"Please check your email address"},
+  sub_failed:{ko:"잠시 후 다시 시도해주세요",en:"Something went wrong — please try again"},
 
   map_title:{ko:"제주 지도 완성하기",en:"Complete your Jeju map"},
   map_sub:{ko:"핀을 눌러 축제로 이동하고 방문 인증하세요",en:"Tap a pin to open a festival & check in"},
@@ -382,8 +384,45 @@ function filtered(){ let l=FEST.filter(inMonth); if(catFilter!=="all") l=l.filte
 function renderInits(){
   document.getElementById("monthLbl").textContent=`${MON[lang][curMonth]} ${curYear}`;
   buildSortSelects();
+  renderCalendar();
   const list=filtered();
   document.getElementById("initList").innerHTML=list.length?list.map(initRow).join(""):`<div class="empty">${t("no_fest")}</div>`;
+}
+/* festivals active on a given calendar day (m is 0-based) */
+function festsOnDay(y,m,d){
+  const key=y*10000+(m+1)*100+d;
+  return FEST.filter(f=>{
+    const a=dObj(f.start), b=dObj(f.end);
+    const ak=a.y*10000+(a.m+1)*100+a.d, bk=b.y*10000+(b.m+1)*100+b.d;
+    return ak<=key && key<=bk;
+  }).filter(f=>catFilter==="all"||f.cat===catFilter).filter(f=>!greenOnly||f.green);
+}
+function renderCalendar(){
+  const wrap=document.getElementById("calWrap"); if(!wrap) return;
+  const y=curYear, m=curMonth;
+  const firstDow=new Date(y,m,1).getDay();       // 0=Sun
+  const dim=new Date(y,m+1,0).getDate();          // days in month
+  const wd=lang==="ko"?["일","월","화","수","목","금","토"]:["S","M","T","W","T","F","S"];
+  const today=new Date();
+  const head=wd.map((w,i)=>`<div class="cal-wd${i===0?' sun':''}${i===6?' sat':''}">${w}</div>`).join("");
+  let cells="";
+  for(let i=0;i<firstDow;i++) cells+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const fs=festsOnDay(y,m,d);
+    const dow=(firstDow+d-1)%7;
+    const isToday=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+    const chips=fs.slice(0,3).map(f=>{
+      const a=dObj(f.start), b=dObj(f.end);
+      const isStart=a.y===y&&a.m===m&&a.d===d;
+      const isEnd=b.y===y&&b.m===m&&b.d===d;
+      const got=has(f.id);
+      return `<button class="cal-ev${got?' got':''}${isStart?' start':''}${isEnd?' end':''}" style="--c:${CATCOLOR[f.cat]}" title="${esc(tv(f.name))} · ${esc(fmtRange(f))}" onclick="event.stopPropagation();openDetail(${f.id})">${isStart?esc(tv(f.name)):"&nbsp;"}</button>`;
+    }).join("");
+    const more=fs.length>3?`<span class="cal-more">+${fs.length-3}</span>`:"";
+    cells+=`<div class="cal-cell${fs.length?' has':''}${isToday?' today':''}${dow===0?' sun':''}${dow===6?' sat':''}">`+
+      `<span class="cal-d">${d}</span>${chips}${more}</div>`;
+  }
+  wrap.innerHTML=`<div class="cal-head">${head}</div><div class="cal-grid">${cells}</div>`;
 }
 function initRow(f){
   return `<div class="init-row ${has(f.id)?'done':''}" onclick="openDetail(${f.id})">
@@ -487,13 +526,17 @@ function renderSearch(){
   buildFilters("searchFilters",renderSearch);
   sortMode=document.getElementById("searchSort").value||sortMode;
   const q=(document.getElementById("searchInput").value||"").toLowerCase().trim();
+  const clr=document.getElementById("searchClear"); if(clr) clr.hidden=!q;
   let list=FEST.slice();
   if(catFilter!=="all") list=list.filter(f=>f.cat===catFilter);
   if(greenOnly) list=list.filter(f=>f.green);
-  if(q) list=list.filter(f=>[tv(f.name),tv(f.loc),f.name.ko,f.name.en,f.loc.ko,f.loc.en,t(f.cat)].join(" ").toLowerCase().includes(q));
+  if(q) list=list.filter(f=>[tv(f.name),tv(f.loc),f.name.ko,f.name.en,f.loc.ko,f.loc.en,t(f.cat),tv(f.desc)].join(" ").toLowerCase().includes(q));
   list=sortList(list);
+  const cnt=document.getElementById("searchCount");
+  if(cnt) cnt.textContent=(q||catFilter!=="all"||greenOnly)?tv({ko:`${list.length}개의 축제`,en:`${list.length} festival${list.length===1?"":"s"}`}):"";
   document.getElementById("searchList").innerHTML=list.length?list.map(pcard).join(""):`<div class="empty" style="grid-column:1/-1">${t("no_result")}</div>`;
 }
+function clearSearch(){ const i=document.getElementById("searchInput"); if(i){ i.value=""; i.focus(); } renderSearch(); }
 
 /* ================= DETAIL ================= */
 let curDetail=null, rvRating=5, rvSus=5;
@@ -803,7 +846,20 @@ async function renderRank(){
 }
 
 /* ================= misc ================= */
-function subscribe(e,form){ e.preventDefault(); form.reset(); toast(t("subscribed")); return false; }
+async function subscribe(e,form){
+  e.preventDefault();
+  const input=form.querySelector('input[type="email"]');
+  const email=(input&&input.value||"").trim();
+  if(!email) return false;
+  const btn=form.querySelector('button'); if(btn) btn.disabled=true;
+  try{
+    await api("/subscribe",{method:"POST",body:JSON.stringify({email})});
+    form.reset(); toast(t("subscribed"));
+  }catch(err){
+    toast(err&&err.error==="invalid_email"?t("sub_invalid"):t("sub_failed"));
+  }finally{ if(btn) btn.disabled=false; }
+  return false;
+}
 function updateHeader(){ document.getElementById("hdrPts").textContent=stamps().length; }
 let toastTimer;
 function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show");

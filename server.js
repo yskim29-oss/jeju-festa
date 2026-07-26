@@ -19,7 +19,38 @@ const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "")
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
 const DB_KEY = "jeju:db";
-const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [] });
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [] });
+
+/* ---- newsletter delivery ---- */
+// Every newsletter signup is stored in the DB and (best-effort) emailed to the owner.
+const NEWSLETTER_TO = process.env.NEWSLETTER_TO || "yunseongkim@jejufesta.online";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+// If no RESEND key is configured, fall back to FormSubmit (a free form->email relay,
+// no API key needed; the target address must confirm it once). Set NEWSLETTER_RELAY="off" to disable.
+const NEWSLETTER_RELAY = process.env.NEWSLETTER_RELAY || "formsubmit";
+async function notifySubscription(email) {
+  const subject = "제주 축제 도장 · 새 뉴스레터 구독";
+  const text = `새로운 뉴스레터 구독자가 있습니다.\n\n이메일: ${email}\n시간: ${new Date().toISOString()}\n\n— jejufesta.online`;
+  try {
+    if (RESEND_API_KEY) {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "Jeju Festa <newsletter@jejufesta.online>", to: [NEWSLETTER_TO], reply_to: email, subject, text }),
+      });
+      if (!r.ok) console.log("newsletter (resend) failed:", r.status, await r.text());
+      return;
+    }
+    if (NEWSLETTER_RELAY !== "off") {
+      const r = await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(NEWSLETTER_TO), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email, _subject: subject, message: text, _template: "table" }),
+      });
+      if (!r.ok) console.log("newsletter (formsubmit) failed:", r.status);
+    }
+  } catch (e) { console.log("newsletter notify error:", e.message); }
+}
 
 async function redisGet(key) {
   const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` } });
@@ -520,6 +551,17 @@ const server = http.createServer(async (req, res) => {
     const u = sessionUser(req);
     if (!u) return send(res, 401, { error: "unauthorized" });
     return send(res, 200, { user: publicUser(u) });
+  }
+
+  /* ---- newsletter subscribe ---- */
+  if (url === "/api/subscribe" && req.method === "POST") {
+    const email = (body.email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: "invalid_email" });
+    if (!Array.isArray(DB.subscribers)) DB.subscribers = [];
+    const already = DB.subscribers.some(s => s.email === email);
+    if (!already) { DB.subscribers.push({ email, ts: Date.now() }); saveDB(); }
+    notifySubscription(email); // best-effort, don't block the response
+    return send(res, 200, { ok: true, already });
   }
 
   if (url === "/api/config" && req.method === "GET") {

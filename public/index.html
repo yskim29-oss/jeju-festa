@@ -241,6 +241,8 @@
           <svg class="icon cc" viewBox="0 0 24 24"><use href="#i-caret"/></svg>
         </div>
       </div>
+      <div class="calwrap" id="calWrap"></div>
+
       <div class="inits">
         <div class="init-head">
           <div data-t="col_title"></div><div data-t="col_tags"></div><div data-t="col_date"></div><div></div>
@@ -293,7 +295,8 @@
       <div class="sec-head"><h2 data-t="search_title"></h2><p data-t="search_sub"></p></div>
       <div class="searchfield">
         <svg class="icon" viewBox="0 0 24 24"><use href="#i-search"/></svg>
-        <input id="searchInput" oninput="renderSearch()">
+        <input id="searchInput" oninput="renderSearch()" onkeydown="if(event.key==='Escape')clearSearch()">
+        <button type="button" id="searchClear" class="searchclear" onclick="clearSearch()" aria-label="clear" hidden>×</button>
       </div>
       <div class="controls" style="margin-bottom:16px">
         <div id="searchFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-right:auto"></div>
@@ -302,6 +305,7 @@
           <svg class="icon cc" viewBox="0 0 24 24"><use href="#i-caret"/></svg>
         </div>
       </div>
+      <div class="searchcount" id="searchCount"></div>
       <div class="pcards" id="searchList"></div>
     </section>
 
