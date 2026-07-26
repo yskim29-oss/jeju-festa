@@ -820,8 +820,10 @@ function renderMy(){
 
 /* ================= RANK ================= */
 async function renderRank(){
-  let board=[];
-  try{ const d=await api("/leaderboard"); board=d.leaderboard; }catch(e){}
+  let board=[], season="";
+  try{ const d=await api("/leaderboard"); board=d.leaderboard; season=d.season||""; }catch(e){}
+  const sub=document.querySelector("#v-rank .sec-head p");
+  if(sub) sub.textContent=(season?season+" · ":"")+t("rank_sub");
   if(!board.some(b=>b.userId===ME.id)) board.push({name:ME.name,avatar:ME.avatar,count:stamps().length,userId:ME.id});
   board.sort((a,b)=>b.count-a.count);
   const max=Math.max(1,...board.map(b=>b.count));

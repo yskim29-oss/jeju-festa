@@ -224,6 +224,8 @@ const SEED_REVIEWS = {
   17:[{name:"유채러버",avatar:"🌴",rating:5,sustainability:4,text:{ko:"녹산로 유채꽃길 인생샷! 차 없는 거리라 걷기 편했어요",en:"Best canola-road photos, and the car-free street made walking easy"}}]
 };
 
+// tiny seeded PRNG so the monthly bot filler is deterministic within a month
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 const SEED_BOTS = [
   {name:"한라산지기",avatar:"🧗",count:5},
   {name:"감귤요정",avatar:"🍊",count:4},
@@ -659,17 +661,36 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { review: rev, festival: festivalPublic(allFestivals().find(f => f.id === fid)) });
   }
 
-  /* ---- leaderboard ---- */
+  /* ---- leaderboard (monthly season; resets on the 1st) ---- */
   if (url === "/api/leaderboard" && req.method === "GET") {
+    const FILL_TO = 8; // if fewer than this many real users have checked in this month, top up with bots
+    const now = new Date();
+    const y = now.getFullYear(), mo = now.getMonth();
+    // count only this-month check-ins per real user
     const counts = {};
-    DB.checkins.forEach(c => { counts[c.userId] = (counts[c.userId] || 0) + 1; });
+    DB.checkins.forEach(c => {
+      const d = new Date(c.at || 0);
+      if (d.getFullYear() === y && d.getMonth() === mo) counts[c.userId] = (counts[c.userId] || 0) + 1;
+    });
     const real = Object.entries(counts).map(([uid, count]) => {
       const u = DB.users[uid]; if (!u) return null;
       return { name: u.name, avatar: u.avatar, count, userId: uid };
     }).filter(Boolean);
-    const board = [...SEED_BOTS.map(b => ({ ...b })), ...real]
-      .sort((a, b) => b.count - a.count);
-    return send(res, 200, { leaderboard: board });
+
+    let board = real.slice();
+    if (real.length < FILL_TO) {
+      // deterministic per-month variation so filler feels alive but stays stable within the month
+      const seed = y * 100 + (mo + 1);
+      const rnd = mulberry32(seed);
+      const bots = SEED_BOTS
+        .map(b => ({ name: b.name, avatar: b.avatar, bot: true, count: Math.max(1, b.count + (Math.floor(rnd() * 3) - 1)) }))
+        .sort(() => rnd() - 0.5)
+        .slice(0, FILL_TO - real.length);
+      board = board.concat(bots);
+    }
+    board.sort((a, b) => b.count - a.count);
+    const season = `${y}.${String(mo + 1).padStart(2, "0")}`;
+    return send(res, 200, { leaderboard: board, season, realCount: real.length });
   }
 
   return send(res, 404, { error: "unknown_route" });
