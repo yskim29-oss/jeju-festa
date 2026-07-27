@@ -68,6 +68,7 @@ const STR = {
   map_sub:{ko:"핀을 눌러 축제로 이동하고 방문 인증하세요",en:"Tap a pin to open a festival & check in"},
   map_slots:{ko:"도장 슬롯",en:"Stamp slots"},
   slot_hint:{ko:"5개를 모아 지도를 완성해요",en:"Collect 5 to complete the map"},
+  map_list_head:{ko:"모든 축제",en:"All festivals"},visited:{ko:"방문",en:"Visited"},
   tip_done:{ko:"방문완료",en:"Visited"},
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
   my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표",en:"Goal"},logout:{ko:"로그아웃",en:"Log out"},
@@ -394,18 +395,23 @@ function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); ren
 function animateHomeIn(){
   const home=document.getElementById("v-home"); if(!home) return;
   if(!home.dataset.entered){ home.dataset.entered="1"; const hero=home.querySelector(".hero"); if(hero) hero.classList.add("enter"); }
-  home.querySelectorAll(".greener, .protect .pblock, .sec-head, .controls, #calWrap, .inits, #pcards, .bugcard").forEach(el=>el.classList.add("reveal"));
+  // fade+rise blocks
+  home.querySelectorAll(".protect .pblock, .controls, #calWrap, .inits, #pcards, .bugcard").forEach(el=>el.classList.add("reveal"));
+  // clip-path mask-reveal on the big headings (printed-in, not faded)
+  home.querySelectorAll(".sec-head h2, .greener h2").forEach(el=>el.classList.add("maskrev"));
   revealObserve();
 }
 function revealObserve(){
-  const els=document.querySelectorAll("#v-home .reveal:not(.in)");
-  if(!("IntersectionObserver" in window)){ els.forEach(e=>e.classList.add("in")); return; }
+  const sel="#v-home .reveal:not(.in), #v-home .maskrev:not(.in)";
+  const revealAll=()=>document.querySelectorAll("#v-home .reveal, #v-home .maskrev").forEach(e=>e.classList.add("in"));
+  if(!("IntersectionObserver" in window)){ revealAll(); return; }
   if(!window._revObs){
     window._revObs=new IntersectionObserver((ents,obs)=>{
       ents.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add("in"); obs.unobserve(en.target); } });
     },{rootMargin:"0px 0px -12% 0px",threshold:0.05});
   }
-  els.forEach(e=>window._revObs.observe(e));
+  document.querySelectorAll(sel).forEach(e=>window._revObs.observe(e));
+  clearTimeout(window._revSafety); window._revSafety=setTimeout(revealAll,3500); // never leave anything clipped/hidden
 }
 function buildFilters(elId,cb){
   const w=document.getElementById(elId); if(!w) return; w.innerHTML="";
@@ -561,14 +567,24 @@ function renderMap(){
   });
   setTimeout(()=>map.invalidateSize(),120);
   renderSlots("mapSlots",false);
-  document.getElementById("mapProg").style.width=Math.min(100,stamps().length/5*100)+"%";
+  const done=stamps().length, pct=Math.min(100,Math.round(done/5*100));
+  document.getElementById("mapProg").style.width=pct+"%";
+  const mc=document.getElementById("mapCount"); if(mc) mc.textContent=Math.min(5,done);
+  const mp=document.getElementById("mapPct"); if(mp) mp.textContent=tv({ko:`제주 지도 ${pct}% 완성`,en:`Jeju map ${pct}% complete`});
+  // legend overlay
+  const leg=document.getElementById("mapLegend");
+  if(leg) leg.innerHTML=CATS.map(c=>`<span class="lg"><i style="background:${CATCOLOR[c]}"></i>${t(c)}</span>`).join("")
+    +`<span class="lg"><i class="lg-got"></i>${t("visited")}</span>`;
   // side list
-  document.getElementById("mapList").innerHTML=FEST.map(f=>`
-    <div class="mlrow" onclick="focusFestival(${f.id})">
-      <div class="mdot" style="background:${has(f.id)?'#0E0F10':CATCOLOR[f.cat]}">${has(f.id)?f.stamp:svg("i-pin")}</div>
+  const visited=FEST.filter(f=>has(f.id)).length;
+  const lc=document.getElementById("mapListCount"); if(lc) lc.textContent=tv({ko:`${FEST.length}곳 · 방문 ${visited}`,en:`${FEST.length} · ${visited} visited`});
+  document.getElementById("mapList").innerHTML=FEST.map(f=>{
+    const got=has(f.id);
+    return `<div class="mlrow ${got?'got':''}" onclick="focusFestival(${f.id})" style="--c:${CATCOLOR[f.cat]}">
+      <div class="mdot" style="background:${got?'var(--ink)':CATCOLOR[f.cat]}">${got?f.stamp:svg("i-pin")}</div>
       <div class="mn">${tv(f.name)}<small>${tv(f.loc)}</small></div>
-      <div class="mgo">${svg("i-arrow-ur")}</div>
-    </div>`).join("");
+      ${got?`<span class="ml-chip">${svg("i-check","icon sm")}</span>`:`<div class="mgo">${svg("i-arrow-ur")}</div>`}
+    </div>`;}).join("");
 }
 function focusFestival(id){
   const f=FEST.find(x=>x.id===id); if(!map||!f) return;
@@ -937,11 +953,11 @@ async function renderImpactBand(){
   let d=null; try{ d=await api("/impact"); }catch(e){ el.innerHTML=""; return; }
   el.innerHTML=`<div class="impactband">
     <div class="ib-head"><span class="ib-eyebrow">${svg("i-leaf","icon sm")}${t("impact_title")}</span><p>${t("impact_sub")}</p></div>
-    <div class="impact-grid">
-      <div class="im-tile"><div class="im-ic">🎫</div><b data-cu="s">0</b><span>${t("im_stamps")}</span></div>
-      <div class="im-tile lime"><div class="im-ic">🧭</div><b data-cu="t">0</b><span>${t("im_travelers")}</span></div>
-      <div class="im-tile green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("im_green")}</span></div>
-      <div class="im-tile dark"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("im_co2")}</span></div>
+    <div class="impact-grid bento">
+      <div class="im-tile t-stamps"><div class="im-ic">🎫</div><b data-cu="s">0</b><span>${t("im_stamps")}</span></div>
+      <div class="im-tile lime t-trav"><div class="im-ic">🧭</div><b data-cu="t">0</b><span>${t("im_travelers")}</span></div>
+      <div class="im-tile green t-green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("im_green")}</span></div>
+      <div class="im-tile dark feature t-co2"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("im_co2")}</span></div>
     </div>
     <div class="impact-note">${t("impact_note")}</div>
   </div>`;

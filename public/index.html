@@ -284,15 +284,24 @@
     <section id="v-map" class="view">
       <div class="sec-head"><h2 data-t="map_title"></h2><p data-t="map_sub"></p></div>
       <div class="maplayout">
-        <div id="map"></div>
+        <div class="mapframe">
+          <div id="map"></div>
+          <div class="maplegend" id="mapLegend"></div>
+        </div>
         <div class="mapside">
           <div class="tracker">
-            <h3 data-t="map_slots"></h3>
-            <p data-t="slot_hint"></p>
+            <div class="tk-top">
+              <div><h3 data-t="map_slots"></h3><p data-t="slot_hint"></p></div>
+              <div class="tk-badge"><b id="mapCount">0</b><span>/5</span></div>
+            </div>
             <div class="slots" id="mapSlots"></div>
             <div class="tprog"><i id="mapProg"></i></div>
+            <div class="tk-pct" id="mapPct"></div>
           </div>
-          <div class="maplist" id="mapList"></div>
+          <div class="maplist-wrap">
+            <div class="ml-head"><span data-t="map_list_head"></span><span class="ml-count" id="mapListCount"></span></div>
+            <div class="maplist" id="mapList"></div>
+          </div>
         </div>
       </div>
     </section>
