@@ -54,7 +54,14 @@ const STR = {
   report_btn:{ko:"신고 보내기",en:"Send report"},
   report_sent:{ko:"신고 접수 완료! 감사합니다 🙏",en:"Report sent! Thank you 🙏"},
   report_empty:{ko:"내용을 입력해주세요",en:"Please enter a message"},
-  cd_ends:{ko:"이번 시즌 종료까지",en:"Season resets in"},
+  cd_ends:{ko:"이번 시즌 마감까지",en:"Season ends in"},
+  cd_dday:{ko:"일 남음",en:"days left"},cd_ontrack:{ko:"시즌 진행 중",en:"Season live"},cd_soon:{ko:"🔥 마감 임박",en:"🔥 Ending soon"},cd_last:{ko:"⏳ 오늘 마감",en:"⏳ Ends today"},cd_elapsed:{ko:"경과",en:"elapsed"},
+  impact_title:{ko:"우리가 함께 만든 변화",en:"The change we made together"},
+  impact_sub:{ko:"제주 여행자들이 지속가능 축제를 즐기며 남긴 발자국",en:"The footprint Jeju travelers left enjoying sustainable festivals"},
+  im_stamps:{ko:"모은 도장",en:"Stamps earned"},im_travelers:{ko:"함께한 여행자",en:"Travelers"},im_green:{ko:"지속가능 방문",en:"Green visits"},im_co2:{ko:"CO₂ 절감 (추정)",en:"CO₂ saved (est.)"},im_reviews:{ko:"남긴 후기",en:"Reviews"},
+  impact_note:{ko:"* CO₂ 절감량은 차 없는 이동·다회용기 사용을 기준으로 한 추정치입니다.",en:"* CO₂ estimate assumes car-free travel and reusable containers per visit."},
+  my_footprint:{ko:"나의 발자국",en:"My footprint"},
+  mf_visited:{ko:"방문한 축제",en:"Festivals visited"},mf_green:{ko:"지속가능 방문",en:"Green visits"},mf_co2:{ko:"CO₂ 절감 (추정)",en:"CO₂ saved (est.)"},mf_rank:{ko:"시즌 순위",en:"Season rank"},
   cd_week:{ko:"주",en:"wk"},cd_day:{ko:"일",en:"d"},cd_hour:{ko:"시간",en:"hr"},cd_min:{ko:"분",en:"min"},cd_sec:{ko:"초",en:"sec"},
 
   map_title:{ko:"제주 지도 완성하기",en:"Complete your Jeju map"},
@@ -824,32 +831,49 @@ function checkRewards(){
 }
 
 /* ================= MY ================= */
+/* animated count-up for a number element (with a safety fallback if rAF is throttled) */
+function countUp(el,to,opts){
+  if(!el) return; to=+to||0; const dur=(opts&&opts.dur)||1100, suffix=(opts&&opts.suffix)||"";
+  const fmt=v=>Math.round(v).toLocaleString("ko-KR")+suffix;
+  let t0=null;
+  const tick=(t)=>{ if(t0==null)t0=t; const p=Math.min(1,(t-t0)/dur); el.textContent=fmt(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+  setTimeout(()=>{ el.textContent=fmt(to); }, dur+120); // guarantee final value
+}
 function renderMy(){
   const n=stamps().length;
   const lvl=t(n>=5?"lvl5":n>=3?"lvl3":n>=1?"lvl1":"lvl0");
   const pct=Math.round(Math.min(100,n/5*100));
+  const gv=FEST.filter(f=>has(f.id)&&f.green).length;
+  const co2=Math.round(gv*2.3);
   const C=326.73, off=C*(1-Math.min(1,n/5));
   const rewards=[{k:1,icon:"🏅",tt:"r1_t",dd:"r1_d"},{k:3,icon:"🎟️",tt:"r3_t",dd:"r3_d"},{k:5,icon:"🎁",tt:"r5_t",dd:"r5_d"}];
   document.getElementById("myBody").innerHTML=`
     <div class="my-hero">
-      <div class="mh-left">
-        <div class="mh-id">
-          <div class="mh-av">${ME.avatar||"🧑‍🌾"}</div>
-          <div>
-            <div class="mh-name">${esc(ME.name||t("me"))}</div>
-            <div class="mh-lvl">${svg("i-leaf")}${lvl}</div>
-          </div>
-        </div>
-        <div class="my-stats">
-          <div class="my-stat"><b>${n}</b><span>${t("st_stamps")}</span></div>
-          <div class="my-stat"><b>${pct}%</b><span>${t("st_progress")}</span></div>
-          <div class="my-stat"><b id="myRank">…</b><span>${t("st_rank")}</span></div>
+      <div class="mh-id">
+        <div class="mh-av">${ME.avatar||"🧑‍🌾"}</div>
+        <div>
+          <div class="mh-name">${esc(ME.name||t("me"))}</div>
+          <div class="mh-lvl">${svg("i-leaf")}${lvl}</div>
+          <div class="mh-prog"><i style="width:${pct}%"></i></div>
+          <div class="mh-progtxt">${t("st_progress")} ${pct}%</div>
         </div>
       </div>
       <div class="ringwrap">
-        <svg class="ring" viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" cx="60" cy="60" r="52" style="stroke-dasharray:${C};stroke-dashoffset:${off}"/></svg>
-        <div class="ring-txt"><b>${n}/5</b><span>${t("my_goal")}</span></div>
+        <svg class="ring" viewBox="0 0 120 120">
+          <defs><linearGradient id="ringgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E0F10"/><stop offset="1" stop-color="#2F6B1E"/></linearGradient></defs>
+          <circle class="ring-bg" cx="60" cy="60" r="52"/>
+          <circle class="ring-fg" cx="60" cy="60" r="52" style="stroke:url(#ringgrad);stroke-dasharray:${C};stroke-dashoffset:${off}"/>
+        </svg>
+        <div class="ring-txt"><b>${n}<i>/5</i></b><span>${t("my_goal")}</span></div>
       </div>
+    </div>
+    <div class="sectlabel">${svg("i-leaf")}${t("my_footprint")}</div>
+    <div class="impact-grid mine">
+      <div class="im-tile"><div class="im-ic">🎫</div><b data-cu="v">0</b><span>${t("mf_visited")}</span></div>
+      <div class="im-tile green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("mf_green")}</span></div>
+      <div class="im-tile"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("mf_co2")}</span></div>
+      <div class="im-tile lime"><div class="im-ic">🏆</div><b id="myRank">…</b><span>${t("mf_rank")}</span></div>
     </div>
     <div class="sectlabel">${svg("i-medal")}${t("my_stamps")}</div>
     <div class="slots light" id="mySlots"></div>
@@ -865,7 +889,11 @@ function renderMy(){
       </div>`; }).join("")}</div>
     <button class="logoutbtn" onclick="logout()">${svg("i-logout","icon sm")} ${t("logout")}</button>`;
   renderSlots("mySlots",false);
-  // fill rank async (no layout flash)
+  const mb=document.getElementById("myBody");
+  countUp(mb.querySelector('[data-cu="v"]'),n);
+  countUp(mb.querySelector('[data-cu="g"]'),gv);
+  countUp(mb.querySelector('[data-cu="c"]'),co2,{suffix:"kg"});
+  // fill rank async
   api("/leaderboard").then(d=>{
     let b=d.leaderboard.slice(); if(!b.some(x=>x.userId===ME.id)) b.push({userId:ME.id,count:n});
     b.sort((a,c)=>c.count-a.count);
@@ -875,6 +903,7 @@ function renderMy(){
 
 /* ================= RANK ================= */
 async function renderRank(){
+  renderImpactBand();
   let board=[], season="";
   try{ const d=await api("/leaderboard"); board=d.leaderboard; season=d.season||""; }catch(e){}
   const sub=document.querySelector("#v-rank .sec-head p");
@@ -886,10 +915,11 @@ async function renderRank(){
   const medals=["🥇","🥈","🥉"], podCls=["pod1","pod2","pod3"];
   const podium=top.length?`<div class="podium">${top.map((p,i)=>{ const me=p.userId===ME.id;
     return `<div class="pod ${podCls[i]} ${me?'me':''}">
+      <div class="pod-rank">${i+1}</div>
       <div class="pod-medal">${medals[i]}</div>
       <div class="pod-av">${p.avatar||"🙂"}</div>
       <div class="pod-name">${esc(p.name)}${me?" · "+t("me"):""}</div>
-      <div class="pod-count">${p.count} ${svg("i-medal")}</div>
+      <div class="pod-count"><b>${p.count}</b>${svg("i-medal")}</div>
     </div>`; }).join("")}</div>`:"";
   const list=rest.length?`<div class="ranklist">${rest.map((p,i)=>{ const me=p.userId===ME.id, w=Math.round(p.count/max*100);
     return `<div class="rrow ${me?'me':''}">
@@ -897,26 +927,56 @@ async function renderRank(){
       <div class="rr-av">${p.avatar||"🙂"}</div>
       <div class="rr-main"><div class="rr-name">${esc(p.name)}${me?`<span class="metag">${t("me")}</span>`:""}</div>
         <div class="rr-bar"><i style="width:${w}%"></i></div></div>
-      <span class="rr-count">${p.count} ${svg("i-medal")}</span>
+      <span class="rr-count"><b>${p.count}</b>${svg("i-medal")}</span>
     </div>`; }).join("")}</div>`:"";
   document.getElementById("rankList").innerHTML=podium+list;
   startRankCountdown();
 }
-/* live monthly countdown until the season resets (1st of next month) */
+async function renderImpactBand(){
+  const el=document.getElementById("rankImpact"); if(!el) return;
+  let d=null; try{ d=await api("/impact"); }catch(e){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="impactband">
+    <div class="ib-head"><span class="ib-eyebrow">${svg("i-leaf","icon sm")}${t("impact_title")}</span><p>${t("impact_sub")}</p></div>
+    <div class="impact-grid">
+      <div class="im-tile"><div class="im-ic">🎫</div><b data-cu="s">0</b><span>${t("im_stamps")}</span></div>
+      <div class="im-tile lime"><div class="im-ic">🧭</div><b data-cu="t">0</b><span>${t("im_travelers")}</span></div>
+      <div class="im-tile green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("im_green")}</span></div>
+      <div class="im-tile dark"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("im_co2")}</span></div>
+    </div>
+    <div class="impact-note">${t("impact_note")}</div>
+  </div>`;
+  countUp(el.querySelector('[data-cu="s"]'),d.stamps);
+  countUp(el.querySelector('[data-cu="t"]'),d.travelers);
+  countUp(el.querySelector('[data-cu="g"]'),d.green);
+  countUp(el.querySelector('[data-cu="c"]'),d.co2,{suffix:"kg"});
+}
+/* live monthly season countdown (D-day + live clock + month-progress bar) */
 let rankCdTimer=null;
 function stopRankCountdown(){ if(rankCdTimer){ clearInterval(rankCdTimer); rankCdTimer=null; } }
 function startRankCountdown(){
   const el=document.getElementById("rankCd"); if(!el) return;
   el.hidden=false;
-  const seg=(v,label)=>`<div class="cd-seg"><b>${String(v).padStart(2,"0")}</b><span>${label}</span></div>`;
+  const p2=v=>String(v).padStart(2,"0");
   function tick(){
     if(!document.getElementById("rankCd")){ stopRankCountdown(); return; }
     const now=new Date();
-    const next=new Date(now.getFullYear(),now.getMonth()+1,1,0,0,0,0);
-    const sec=Math.max(0,Math.floor((next-now)/1000));
-    const w=Math.floor(sec/604800), d=Math.floor((sec%604800)/86400), h=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60), s=sec%60;
-    el.innerHTML=`<div class="cd-lab">${svg("i-clock","icon sm")}<span>${t("cd_ends")}</span></div>`+
-      `<div class="cd-segs">${seg(w,t("cd_week"))}${seg(d,t("cd_day"))}${seg(h,t("cd_hour"))}${seg(m,t("cd_min"))}${seg(s,t("cd_sec"))}</div>`;
+    const mStart=new Date(now.getFullYear(),now.getMonth(),1,0,0,0,0);
+    const mEnd=new Date(now.getFullYear(),now.getMonth()+1,1,0,0,0,0);
+    const sec=Math.max(0,Math.floor((mEnd-now)/1000));
+    const dday=Math.floor(sec/86400), h=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    const pct=Math.min(100,Math.max(0,Math.round((now-mStart)/(mEnd-mStart)*100)));
+    const status = dday<=0 ? {c:"last",txt:t("cd_last")} : dday<3 ? {c:"soon",txt:t("cd_soon")} : {c:"live",txt:t("cd_ontrack")};
+    el.className="rankcd "+status.c;
+    el.innerHTML=`
+      <div class="cd-inner">
+        <div class="cd-dday"><span class="cd-dpre">D-</span><span class="cd-dnum">${dday}</span></div>
+        <div class="cd-mid">
+          <div class="cd-top"><span class="cd-lab">${svg("i-clock","icon sm")}<span>${t("cd_ends")}</span></span><span class="cd-pill">${status.txt}</span></div>
+          <div class="cd-clock"><b>${p2(h)}</b><i>:</i><b>${p2(m)}</b><i>:</i><b class="cd-sec">${p2(s)}</b></div>
+        </div>
+      </div>
+      <div class="cd-bar"><i style="width:${pct}%"></i></div>
+      <div class="cd-foot"><span>${MON[lang][now.getMonth()]} ${t("rank_title")}</span><span>${pct}% ${t("cd_elapsed")}</span></div>`;
   }
   stopRankCountdown(); tick(); rankCdTimer=setInterval(tick,1000);
 }
