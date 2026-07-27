@@ -860,8 +860,6 @@ function renderMy(){
   const n=stamps().length;
   const lvl=t(n>=5?"lvl5":n>=3?"lvl3":n>=1?"lvl1":"lvl0");
   const pct=Math.round(Math.min(100,n/5*100));
-  const gv=FEST.filter(f=>has(f.id)&&f.green).length;
-  const co2=Math.round(gv*2.3);
   const C=326.73, off=C*(1-Math.min(1,n/5));
   const rewards=[{k:1,icon:"🏅",tt:"r1_t",dd:"r1_d"},{k:3,icon:"🎟️",tt:"r3_t",dd:"r3_d"},{k:5,icon:"🎁",tt:"r5_t",dd:"r5_d"}];
   document.getElementById("myBody").innerHTML=`
@@ -884,13 +882,6 @@ function renderMy(){
         <div class="ring-txt"><b>${n}<i>/5</i></b><span>${t("my_goal")}</span></div>
       </div>
     </div>
-    <div class="sectlabel">${svg("i-leaf")}${t("my_footprint")}</div>
-    <div class="impact-grid mine">
-      <div class="im-tile"><div class="im-ic">🎫</div><b data-cu="v">0</b><span>${t("mf_visited")}</span></div>
-      <div class="im-tile green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("mf_green")}</span></div>
-      <div class="im-tile"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("mf_co2")}</span></div>
-      <div class="im-tile lime"><div class="im-ic">🏆</div><b id="myRank">…</b><span>${t("mf_rank")}</span></div>
-    </div>
     <div class="sectlabel">${svg("i-medal")}${t("my_stamps")}</div>
     <div class="slots light" id="mySlots"></div>
     <div class="sectlabel">${svg("i-gift")}${t("my_rewards")}</div>
@@ -905,21 +896,10 @@ function renderMy(){
       </div>`; }).join("")}</div>
     <button class="logoutbtn" onclick="logout()">${svg("i-logout","icon sm")} ${t("logout")}</button>`;
   renderSlots("mySlots",false);
-  const mb=document.getElementById("myBody");
-  countUp(mb.querySelector('[data-cu="v"]'),n);
-  countUp(mb.querySelector('[data-cu="g"]'),gv);
-  countUp(mb.querySelector('[data-cu="c"]'),co2,{suffix:"kg"});
-  // fill rank async
-  api("/leaderboard").then(d=>{
-    let b=d.leaderboard.slice(); if(!b.some(x=>x.userId===ME.id)) b.push({userId:ME.id,count:n});
-    b.sort((a,c)=>c.count-a.count);
-    const el=document.getElementById("myRank"); if(el) el.textContent="#"+(b.findIndex(x=>x.userId===ME.id)+1);
-  }).catch(()=>{ const el=document.getElementById("myRank"); if(el) el.textContent="-"; });
 }
 
 /* ================= RANK ================= */
 async function renderRank(){
-  renderImpactBand();
   let board=[], season="";
   try{ const d=await api("/leaderboard"); board=d.leaderboard; season=d.season||""; }catch(e){}
   const sub=document.querySelector("#v-rank .sec-head p");
@@ -947,24 +927,6 @@ async function renderRank(){
     </div>`; }).join("")}</div>`:"";
   document.getElementById("rankList").innerHTML=podium+list;
   startRankCountdown();
-}
-async function renderImpactBand(){
-  const el=document.getElementById("rankImpact"); if(!el) return;
-  let d=null; try{ d=await api("/impact"); }catch(e){ el.innerHTML=""; return; }
-  el.innerHTML=`<div class="impactband">
-    <div class="ib-head"><span class="ib-eyebrow">${svg("i-leaf","icon sm")}${t("impact_title")}</span><p>${t("impact_sub")}</p></div>
-    <div class="impact-grid bento">
-      <div class="im-tile t-stamps"><div class="im-ic">🎫</div><b data-cu="s">0</b><span>${t("im_stamps")}</span></div>
-      <div class="im-tile lime t-trav"><div class="im-ic">🧭</div><b data-cu="t">0</b><span>${t("im_travelers")}</span></div>
-      <div class="im-tile green t-green"><div class="im-ic">♻️</div><b data-cu="g">0</b><span>${t("im_green")}</span></div>
-      <div class="im-tile dark feature t-co2"><div class="im-ic">🌱</div><b data-cu="c">0</b><span>${t("im_co2")}</span></div>
-    </div>
-    <div class="impact-note">${t("impact_note")}</div>
-  </div>`;
-  countUp(el.querySelector('[data-cu="s"]'),d.stamps);
-  countUp(el.querySelector('[data-cu="t"]'),d.travelers);
-  countUp(el.querySelector('[data-cu="g"]'),d.green);
-  countUp(el.querySelector('[data-cu="c"]'),d.co2,{suffix:"kg"});
 }
 /* live monthly season countdown (D-day + live clock + month-progress bar) */
 let rankCdTimer=null;
