@@ -27,6 +27,8 @@ const STR = {
   hero_email:{ko:"이메일을 입력하세요",en:"Enter your e-mail"},
   subscribe:{ko:"구독",en:"Subscribe"},
   hero_cta:{ko:"축제 지도 보기",en:"Explore the map"},
+  home_stats_eyebrow:{ko:"지금까지 제주 여행자들과 함께",en:"Together with Jeju travelers so far"},
+  home_users:{ko:"함께한 여행자",en:"Travelers"},home_visits:{ko:"누적 축제 방문",en:"Festival visits"},
   hero_chip:{ko:"우리와 함께한 여행자들",en:"Our volunteers"},
   hero_social:{ko:"소셜에서 만나요",en:"Find us on social"},
   hero_cap:{ko:"제주의 자연과 축제를 함께 지켜가는 여행자 커뮤니티입니다.",en:"A traveler community protecting Jeju's nature & festivals."},
@@ -388,7 +390,23 @@ function pickDefaultMonth(){
 function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;} renderHome(); }
 
 /* ================= HOME ================= */
-function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); animateHomeIn(); }
+function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); renderHomeStats(); animateHomeIn(); }
+function renderHomeStats(){
+  const el=document.getElementById("homeStats"); if(!el || el.dataset.loaded) return;
+  el.dataset.loaded="1";
+  api("/impact").then(d=>{
+    el.innerHTML=`<div class="hs-card">
+      <div class="hs-eyebrow">${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
+      <div class="hs-row">
+        <div class="hs-item"><b data-cu="u">0</b><span>${t("home_users")}</span></div>
+        <div class="hs-div"></div>
+        <div class="hs-item"><b data-cu="v">0</b><span>${t("home_visits")}</span></div>
+      </div>
+    </div>`;
+    countUp(el.querySelector('[data-cu="u"]'),d.travelers);
+    countUp(el.querySelector('[data-cu="v"]'),d.stamps);
+  }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
+}
 /* home entrance + scroll-reveal animations.
    Elements are visible by default; `.in` (added by the observer as they approach the viewport)
    triggers the entrance keyframe. Fling-past or observer-less cases just leave content visible. */

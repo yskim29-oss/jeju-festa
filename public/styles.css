@@ -961,3 +961,14 @@ body.introlock{overflow:hidden}
   .impact-grid.bento .im-tile b{font-size:34px}
 }
 .im-tile.feature{box-shadow:var(--sh-md)}
+
+/* ---------- home stats counter ---------- */
+.homestats{margin:26px 0 0}
+.hs-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:26px 30px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;align-items:center;gap:18px}
+.hs-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)}
+.hs-eyebrow .icon{color:#2f9e62;width:16px;height:16px}
+.hs-row{display:flex;align-items:center;justify-content:center;gap:clamp(28px,7vw,90px)}
+.hs-item{text-align:center}
+.hs-item b{font-family:var(--display);font-weight:800;font-size:clamp(32px,5vw,46px);letter-spacing:-.03em;color:var(--ink);display:block;line-height:1;font-variant-numeric:tabular-nums}
+.hs-item span{font-size:13px;font-weight:700;color:var(--muted);margin-top:9px;display:block}
+.hs-div{width:1px;align-self:stretch;background:var(--line);margin:4px 0}
