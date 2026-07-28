@@ -397,19 +397,20 @@ function renderHomeStats(){
   const el=document.getElementById("homeStats"); if(!el || el.dataset.loaded) return;
   el.dataset.loaded="1";
   api("/impact").then(d=>{
+    const stat=(ic,cu,lab)=>`<div class="hs-item"><div class="hs-ic">${ic}</div><div class="tk" data-cu="${cu}"></div><span>${lab}</span></div>`;
     el.innerHTML=`<div class="hs-card">
       <div class="hs-eyebrow"><span class="hs-live"></span>${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
       <div class="hs-row">
-        <div class="hs-item"><div class="hs-ic">👥</div><b data-cu="s">0</b><span>${t("home_signups")}</span></div>
-        <div class="hs-item"><div class="hs-ic">🧭</div><b data-cu="u">0</b><span>${t("home_users")}</span></div>
-        <div class="hs-item"><div class="hs-ic">🎫</div><b data-cu="v">0</b><span>${t("home_visits")}</span></div>
-        <div class="hs-item"><div class="hs-ic">📈</div><b data-cu="w">0</b><span>${t("home_views")}</span></div>
+        ${stat("👥","s",t("home_signups"))}
+        ${stat("🧭","u",t("home_users"))}
+        ${stat("🎫","v",t("home_visits"))}
+        ${stat("📈","w",t("home_views"))}
       </div>
     </div>`;
-    countUp(el.querySelector('[data-cu="s"]'),d.signups,{suffix:"+"});
-    countUp(el.querySelector('[data-cu="u"]'),d.travelers,{suffix:"+"});
-    countUp(el.querySelector('[data-cu="v"]'),d.stamps,{suffix:"+"});
-    countUp(el.querySelector('[data-cu="w"]'),d.views,{suffix:"+"});
+    countUpTicker(el.querySelector('[data-cu="s"]'),d.signups);
+    countUpTicker(el.querySelector('[data-cu="u"]'),d.travelers);
+    countUpTicker(el.querySelector('[data-cu="v"]'),d.stamps);
+    countUpTicker(el.querySelector('[data-cu="w"]'),d.views);
   }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
 }
 /* home entrance + scroll-reveal animations.
@@ -879,6 +880,19 @@ function countUp(el,to,opts){
   const tick=(t)=>{ if(t0==null)t0=t; const p=Math.min(1,(t-t0)/dur); el.textContent=fmt(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
   setTimeout(()=>{ el.textContent=fmt(to); }, dur+120); // guarantee final value
+}
+/* retro odometer / split-flap ticker: renders a number as dark digit tiles that spin up */
+function renderTicker(el,num){
+  const s=Math.round(num).toLocaleString("ko-KR");
+  el.innerHTML=[...s].map(ch=>ch===","?`<span class="tk-sep">,</span>`:`<span class="tk-d">${ch}</span>`).join("");
+}
+function countUpTicker(el,to,opts){
+  if(!el) return; to=+to||0; const dur=(opts&&opts.dur)||1500;
+  if(document.hidden){ renderTicker(el,to); return; }   // hidden tab → show final, no animation
+  let t0=null;
+  const tick=(t)=>{ if(t0==null)t0=t; const p=Math.min(1,(t-t0)/dur); renderTicker(el,to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+  setTimeout(()=>renderTicker(el,to),dur+150);          // guarantee final value
 }
 function renderMy(){
   const n=stamps().length;
