@@ -28,6 +28,8 @@ const STR = {
   subscribe:{ko:"구독",en:"Subscribe"},
   hero_cta:{ko:"축제 지도 보기",en:"Explore the map"},
   home_stats_eyebrow:{ko:"지금까지 제주 여행자들과 함께",en:"Together with Jeju travelers so far"},
+  home_stats_sub:{ko:"도장 하나하나가 모여 만든 숫자예요.",en:"Every number here is a stamp someone earned."},
+  home_stats_live:{ko:"실시간 집계",en:"Updated live"},home_stats_ppl:{ko:"명",en:""},
   home_users:{ko:"함께한 여행자",en:"Travelers"},home_visits:{ko:"누적 축제 방문",en:"Festival visits"},
   home_signups:{ko:"가입한 회원",en:"Members joined"},home_views:{ko:"사이트 방문",en:"Site views"},
   hero_chip:{ko:"우리와 함께한 여행자들",en:"Our volunteers"},
@@ -397,20 +399,25 @@ function renderHomeStats(){
   const el=document.getElementById("homeStats"); if(!el || el.dataset.loaded) return;
   el.dataset.loaded="1";
   api("/impact").then(d=>{
-    const stat=(ic,cu,lab)=>`<div class="hs-item"><div class="hs-ic">${ic}</div><div class="tk" data-cu="${cu}"></div><span>${lab}</span></div>`;
-    el.innerHTML=`<div class="hs-card">
-      <div class="hs-eyebrow"><span class="hs-live"></span>${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
-      <div class="hs-row">
-        ${stat("👥","s",t("home_signups"))}
-        ${stat("🧭","u",t("home_users"))}
-        ${stat("🎫","v",t("home_visits"))}
-        ${stat("📈","w",t("home_views"))}
+    const row=(cu,lab)=>`<div class="hst-line"><span>${lab}</span><b data-cu="${cu}">0</b></div>`;
+    el.innerHTML=`<div class="hst">
+      <div class="hst-main">
+        <span class="hst-over">${t("home_stats_eyebrow")}</span>
+        <div class="hst-big"><b data-cu="u">0</b><i>${t("home_stats_ppl")}</i></div>
+        <p class="hst-sub">${t("home_stats_sub")}</p>
+      </div>
+      <div class="hst-perf" aria-hidden="true"></div>
+      <div class="hst-stub">
+        ${row("s",t("home_signups"))}
+        ${row("v",t("home_visits"))}
+        ${row("w",t("home_views"))}
+        <div class="hst-foot">${t("home_stats_live")}</div>
       </div>
     </div>`;
-    countUpTicker(el.querySelector('[data-cu="s"]'),d.signups);
-    countUpTicker(el.querySelector('[data-cu="u"]'),d.travelers);
-    countUpTicker(el.querySelector('[data-cu="v"]'),d.stamps);
-    countUpTicker(el.querySelector('[data-cu="w"]'),d.views);
+    countUp(el.querySelector('[data-cu="u"]'),d.travelers,{dur:1400});
+    countUp(el.querySelector('[data-cu="s"]'),d.signups,{dur:1200});
+    countUp(el.querySelector('[data-cu="v"]'),d.stamps,{dur:1300});
+    countUp(el.querySelector('[data-cu="w"]'),d.views,{dur:1500});
   }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
 }
 /* home entrance + scroll-reveal animations.
