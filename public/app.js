@@ -398,18 +398,18 @@ function renderHomeStats(){
   el.dataset.loaded="1";
   api("/impact").then(d=>{
     el.innerHTML=`<div class="hs-card">
-      <div class="hs-eyebrow">${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
+      <div class="hs-eyebrow"><span class="hs-live"></span>${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
       <div class="hs-row">
-        <div class="hs-item"><b data-cu="s">0</b><span>${t("home_signups")}</span></div>
-        <div class="hs-item"><b data-cu="u">0</b><span>${t("home_users")}</span></div>
-        <div class="hs-item"><b data-cu="v">0</b><span>${t("home_visits")}</span></div>
-        <div class="hs-item"><b data-cu="w">0</b><span>${t("home_views")}</span></div>
+        <div class="hs-item"><div class="hs-ic">👥</div><b data-cu="s">0</b><span>${t("home_signups")}</span></div>
+        <div class="hs-item"><div class="hs-ic">🧭</div><b data-cu="u">0</b><span>${t("home_users")}</span></div>
+        <div class="hs-item"><div class="hs-ic">🎫</div><b data-cu="v">0</b><span>${t("home_visits")}</span></div>
+        <div class="hs-item"><div class="hs-ic">📈</div><b data-cu="w">0</b><span>${t("home_views")}</span></div>
       </div>
     </div>`;
-    countUp(el.querySelector('[data-cu="s"]'),d.signups);
-    countUp(el.querySelector('[data-cu="u"]'),d.travelers);
-    countUp(el.querySelector('[data-cu="v"]'),d.stamps);
-    countUp(el.querySelector('[data-cu="w"]'),d.views);
+    countUp(el.querySelector('[data-cu="s"]'),d.signups,{suffix:"+"});
+    countUp(el.querySelector('[data-cu="u"]'),d.travelers,{suffix:"+"});
+    countUp(el.querySelector('[data-cu="v"]'),d.stamps,{suffix:"+"});
+    countUp(el.querySelector('[data-cu="w"]'),d.views,{suffix:"+"});
   }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
 }
 /* home entrance + scroll-reveal animations.
