@@ -725,7 +725,7 @@ const server = http.createServer(async (req, res) => {
     const travelers = 9 + Math.floor(days / 3) + realTravelers;
     const green = 26 + days + realGreen;
     const reviews = 12 + Math.floor(days / 2) + realReviews;
-    const signups = 18 + Math.floor(days / 2) + realSignups;   // registered accounts
+    const signups = 18 + days + realSignups;                   // registered accounts (~+1/day baseline)
     const views = 260 + days * 9 + realViews;                  // website page loads
     // illustrative estimate: ~2.3 kg CO2 avoided per sustainable visit (car-free travel + reusables)
     const co2 = Math.round(green * 2.3);
