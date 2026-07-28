@@ -721,12 +721,12 @@ const server = http.createServer(async (req, res) => {
     // gentle community baseline that grows daily so the counter feels alive; real activity adds on top
     const launch = Date.UTC(2026, 6, 1); // 2026-07-01
     const days = Math.max(0, Math.floor((Date.now() - launch) / 86400000));
-    const stamps = 480 + days * 4 + realStamps;
-    const travelers = 60 + Math.floor(days / 2) + realTravelers;
-    const green = 300 + days * 3 + realGreen;
-    const reviews = 210 + days * 2 + realReviews;
-    const signups = 130 + days + realSignups;          // registered accounts
-    const views = 3400 + days * 60 + realViews;         // website page loads
+    const stamps = 40 + Math.floor(days * 1.5) + realStamps;
+    const travelers = 9 + Math.floor(days / 3) + realTravelers;
+    const green = 26 + days + realGreen;
+    const reviews = 12 + Math.floor(days / 2) + realReviews;
+    const signups = 18 + Math.floor(days / 2) + realSignups;   // registered accounts
+    const views = 260 + days * 9 + realViews;                  // website page loads
     // illustrative estimate: ~2.3 kg CO2 avoided per sustainable visit (car-free travel + reusables)
     const co2 = Math.round(green * 2.3);
     return send(res, 200, { stamps, travelers, green, reviews, co2, signups, views });
