@@ -29,6 +29,7 @@ const STR = {
   hero_cta:{ko:"축제 지도 보기",en:"Explore the map"},
   home_stats_eyebrow:{ko:"지금까지 제주 여행자들과 함께",en:"Together with Jeju travelers so far"},
   home_users:{ko:"함께한 여행자",en:"Travelers"},home_visits:{ko:"누적 축제 방문",en:"Festival visits"},
+  home_signups:{ko:"가입한 회원",en:"Members joined"},home_views:{ko:"사이트 방문",en:"Site views"},
   hero_chip:{ko:"우리와 함께한 여행자들",en:"Our volunteers"},
   hero_social:{ko:"소셜에서 만나요",en:"Find us on social"},
   hero_cap:{ko:"제주의 자연과 축제를 함께 지켜가는 여행자 커뮤니티입니다.",en:"A traveler community protecting Jeju's nature & festivals."},
@@ -280,6 +281,7 @@ async function boot(){
   document.getElementById("switchBtn").onclick=()=>setAuthMode(authMode==="login"?"signup":"login");
   document.getElementById("demoBtn").onclick=demoLogin;
   document.getElementById("inPw").addEventListener("keydown",e=>{if(e.key==="Enter")submitAuth();});
+  api("/view",{method:"POST"}).catch(()=>{});   // count this site load as a page view
   if(!localStorage.getItem("jf_intro_seen")) showIntro();   // first-visit onboarding
   initGoogle();   // shows a Google button if GOOGLE_CLIENT_ID is configured
   if(token){ try{ const d=await api("/me"); ME=d.user; await enterApp(); return; }catch(e){ token=null; localStorage.removeItem("jf_token"); } }
@@ -398,13 +400,16 @@ function renderHomeStats(){
     el.innerHTML=`<div class="hs-card">
       <div class="hs-eyebrow">${svg("i-leaf","icon sm")}<span>${t("home_stats_eyebrow")}</span></div>
       <div class="hs-row">
+        <div class="hs-item"><b data-cu="s">0</b><span>${t("home_signups")}</span></div>
         <div class="hs-item"><b data-cu="u">0</b><span>${t("home_users")}</span></div>
-        <div class="hs-div"></div>
         <div class="hs-item"><b data-cu="v">0</b><span>${t("home_visits")}</span></div>
+        <div class="hs-item"><b data-cu="w">0</b><span>${t("home_views")}</span></div>
       </div>
     </div>`;
+    countUp(el.querySelector('[data-cu="s"]'),d.signups);
     countUp(el.querySelector('[data-cu="u"]'),d.travelers);
     countUp(el.querySelector('[data-cu="v"]'),d.stamps);
+    countUp(el.querySelector('[data-cu="w"]'),d.views);
   }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
 }
 /* home entrance + scroll-reveal animations.
@@ -869,6 +874,7 @@ function checkRewards(){
 function countUp(el,to,opts){
   if(!el) return; to=+to||0; const dur=(opts&&opts.dur)||1100, suffix=(opts&&opts.suffix)||"";
   const fmt=v=>Math.round(v).toLocaleString("ko-KR")+suffix;
+  if(document.hidden){ el.textContent=fmt(to); return; } // tab not visible → skip animation, show final now
   let t0=null;
   const tick=(t)=>{ if(t0==null)t0=t; const p=Math.min(1,(t-t0)/dur); el.textContent=fmt(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); };
   requestAnimationFrame(tick);

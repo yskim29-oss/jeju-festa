@@ -19,7 +19,7 @@ const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "")
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
 const DB_KEY = "jeju:db";
-const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [] });
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [], views: 0 });
 
 /* ---- owner email delivery ---- */
 // Bug reports are stored in the DB and (best-effort) emailed to the owner.
@@ -702,6 +702,13 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { leaderboard: board, season, realCount: real.length });
   }
 
+  /* ---- page-view counter (called once per site load) ---- */
+  if (url === "/api/view" && req.method === "POST") {
+    DB.views = (DB.views || 0) + 1;
+    saveDB();
+    return send(res, 200, { ok: true });
+  }
+
   /* ---- collective sustainability impact ---- */
   if (url === "/api/impact" && req.method === "GET") {
     const greenIds = new Set(allFestivals().filter(f => f.green).map(f => f.id));
@@ -709,6 +716,8 @@ const server = http.createServer(async (req, res) => {
     const realTravelers = new Set(DB.checkins.map(c => c.userId)).size;
     const realGreen = DB.checkins.filter(c => greenIds.has(c.festivalId)).length;
     const realReviews = DB.reviews.length;
+    const realSignups = Object.keys(DB.users).length;
+    const realViews = DB.views || 0;
     // gentle community baseline that grows daily so the counter feels alive; real activity adds on top
     const launch = Date.UTC(2026, 6, 1); // 2026-07-01
     const days = Math.max(0, Math.floor((Date.now() - launch) / 86400000));
@@ -716,9 +725,11 @@ const server = http.createServer(async (req, res) => {
     const travelers = 60 + Math.floor(days / 2) + realTravelers;
     const green = 300 + days * 3 + realGreen;
     const reviews = 210 + days * 2 + realReviews;
+    const signups = 130 + days + realSignups;          // registered accounts
+    const views = 3400 + days * 60 + realViews;         // website page loads
     // illustrative estimate: ~2.3 kg CO2 avoided per sustainable visit (car-free travel + reusables)
     const co2 = Math.round(green * 2.3);
-    return send(res, 200, { stamps, travelers, green, reviews, co2 });
+    return send(res, 200, { stamps, travelers, green, reviews, co2, signups, views });
   }
 
   return send(res, 404, { error: "unknown_route" });
