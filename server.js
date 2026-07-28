@@ -491,13 +491,21 @@ const MIME = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
 
 function send(res, code, data, headers = {}) {
   const body = typeof data === "string" ? data : JSON.stringify(data);
-  res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", ...headers });
+  res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", ...SEC_HEADERS, ...headers });
   res.end(body);
 }
+const MAX_BODY = 64 * 1024; // 64KB request-body cap (prevents memory-exhaustion floods)
 function readBody(req) {
   return new Promise((resolve) => {
-    let b = ""; req.on("data", c => b += c);
-    req.on("end", () => { try { resolve(b ? JSON.parse(b) : {}); } catch (e) { resolve({}); } });
+    let b = "", len = 0, done = false;
+    req.on("data", c => {
+      if (done) return;
+      len += c.length;
+      if (len > MAX_BODY) { done = true; try { req.resume(); } catch (e) {} return resolve({ __toobig: true }); } // drain & reject cleanly
+      b += c;
+    });
+    req.on("end", () => { if (done) return; try { resolve(b ? JSON.parse(b) : {}); } catch (e) { resolve({}); } });
+    req.on("error", () => resolve({}));
   });
 }
 function serveStatic(req, res) {
@@ -507,17 +515,60 @@ function serveStatic(req, res) {
   if (!fp.startsWith(PUB)) return send(res, 403, { error: "forbidden" });
   fs.readFile(fp, (err, data) => {
     if (err) return send(res, 404, "Not found", { "Content-Type": "text/plain" });
-    res.writeHead(200, { "Content-Type": MIME[path.extname(fp)] || "application/octet-stream" });
+    res.writeHead(200, { "Content-Type": MIME[path.extname(fp)] || "application/octet-stream", ...SEC_HEADERS });
     res.end(data);
   });
 }
 
-const server = http.createServer(async (req, res) => {
+/* ---- rate limiting (per-IP, in-memory) — application-layer abuse/flood defense ---- */
+const RL_WINDOW = 60 * 1000;   // 1 minute window
+const RL_GLOBAL = 150;         // any /api request, per IP per minute
+const RL_AUTH = 12;            // login/signup/google, per IP per minute (brute-force guard)
+const RL_WRITE = 40;           // other POST/PUT (view/report/checkin/…), per IP per minute
+const rlMap = new Map();       // "bucket:ip" -> { c, reset }
+function clientIP(req) {
+  const cf = req.headers["cf-connecting-ip"];
+  if (cf) return String(cf).trim();
+  const xff = req.headers["x-forwarded-for"];
+  if (xff) return String(xff).split(",")[0].trim();
+  return (req.socket && req.socket.remoteAddress) || "unknown";
+}
+function tooMany(key, max) {
+  const now = Date.now();
+  let e = rlMap.get(key);
+  if (!e || now >= e.reset) { e = { c: 0, reset: now + RL_WINDOW }; rlMap.set(key, e); }
+  e.c++;
+  return e.c > max ? Math.ceil((e.reset - now) / 1000) : 0;
+}
+// keep the map bounded (prune expired; hard-clear if it grows implausibly large)
+setInterval(() => {
+  if (rlMap.size > 20000) return rlMap.clear();
+  const now = Date.now();
+  for (const [k, e] of rlMap) if (now >= e.reset) rlMap.delete(k);
+}, RL_WINDOW).unref();
+
+const SEC_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
   const url = req.url.split("?")[0];
 
   if (!url.startsWith("/api/")) return serveStatic(req, res);
 
+  // rate limit before doing any work (incl. body parsing)
+  const ip = clientIP(req);
+  let ra = tooMany("g:" + ip, RL_GLOBAL);
+  if (!ra) {
+    if (url === "/api/login" || url === "/api/signup" || url === "/api/google") ra = tooMany("a:" + ip, RL_AUTH);
+    else if (req.method === "POST" || req.method === "PUT") ra = tooMany("w:" + ip, RL_WRITE);
+  }
+  if (ra) return send(res, 429, { error: "rate_limited" }, { "Retry-After": String(ra) });
+
   const body = (req.method === "POST" || req.method === "PUT") ? await readBody(req) : {};
+  if (body && body.__toobig) return send(res, 413, { error: "payload_too_large" });
 
   /* ---- auth ---- */
   if (url === "/api/signup" && req.method === "POST") {
@@ -734,6 +785,14 @@ const server = http.createServer(async (req, res) => {
 
   return send(res, 404, { error: "unknown_route" });
 });
+
+/* slow-loris / resource-exhaustion hardening */
+server.headersTimeout = 12000;     // must finish sending headers within 12s
+server.requestTimeout = 20000;     // whole request within 20s
+server.keepAliveTimeout = 8000;    // idle keep-alive sockets closed after 8s
+server.maxHeadersCount = 60;       // cap header count
+server.maxConnections = 256;       // cap concurrent sockets (drops excess connection floods)
+server.on("clientError", (err, socket) => { try { socket.destroy(); } catch (e) {} }); // never crash on malformed input
 
 async function start() {
   DB = await loadDB();                            // load persisted data before serving
