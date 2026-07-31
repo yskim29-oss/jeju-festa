@@ -21,7 +21,7 @@ const STR = {
   err_google_failed:{ko:"구글 로그인에 실패했어요.",en:"Google sign-in failed."},
   or:{ko:"또는",en:"or"},
 
-  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},
+  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},
   faq_title:{ko:"자주 묻는 질문",en:"Frequently asked questions"},
   faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
   faq_footer:{ko:"자주 묻는 질문",en:"FAQ"},
@@ -324,7 +324,7 @@ function setLang(l){
 }
 
 /* ================= nav ================= */
-const NAV=["home","map","search","my","rank"];
+const NAV=["home","map","search","my","rank","faq"];
 function go(view,fromPop){
   document.querySelectorAll("section.view").forEach(s=>s.classList.remove("on"));
   document.getElementById("v-"+view).classList.add("on");
