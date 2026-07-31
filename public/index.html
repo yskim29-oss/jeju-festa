@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#DEF24E">
 <title>제주 축제 도장 · Jeju Festa</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -287,21 +287,34 @@
 
     <!-- ===== MAP ===== -->
     <section id="v-map" class="view">
-      <div class="sec-head"><h2 data-t="map_title"></h2><p data-t="map_sub"></p></div>
+      <header class="map-hero">
+        <span class="map-ey" data-t="map_eyebrow"></span>
+        <h1 class="map-t" data-t="map_title"></h1>
+        <p class="map-s" data-t="map_sub"></p>
+      </header>
       <div class="maplayout">
         <div class="mapframe">
           <div id="map"></div>
+          <div class="mapbadge" id="mapBadge"></div>
           <div class="maplegend" id="mapLegend"></div>
         </div>
         <div class="mapside">
           <div class="tracker">
-            <div class="tk-top">
-              <div><h3 data-t="map_slots"></h3><p data-t="slot_hint"></p></div>
-              <div class="tk-badge"><b id="mapCount">0</b><span>/5</span></div>
+            <div class="tk-guilloche" aria-hidden="true"></div>
+            <div class="tk-head">
+              <span class="tk-eyebrow">🗺 <span data-t="map_slots"></span></span>
+              <p data-t="slot_hint"></p>
             </div>
-            <div class="slots" id="mapSlots"></div>
-            <div class="tprog"><i id="mapProg"></i></div>
-            <div class="tk-pct" id="mapPct"></div>
+            <div class="tk-ringrow">
+              <div class="tk-ring">
+                <svg viewBox="0 0 90 90"><circle class="bg" cx="45" cy="45" r="39"/><circle class="fg" id="mapRing" cx="45" cy="45" r="39"/></svg>
+                <div class="tk-ring-txt"><b id="mapCount">0</b><span>/5</span></div>
+              </div>
+              <div class="tk-side">
+                <div class="slots" id="mapSlots"></div>
+                <div class="tk-pct" id="mapPct"></div>
+              </div>
+            </div>
           </div>
           <div class="maplist-wrap">
             <div class="ml-head"><span data-t="map_list_head"></span><span class="ml-count" id="mapListCount"></span></div>
@@ -383,6 +396,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

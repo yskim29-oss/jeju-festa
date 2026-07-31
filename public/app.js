@@ -83,8 +83,9 @@ const STR = {
 
   map_title:{ko:"제주 지도 완성하기",en:"Complete your Jeju map"},
   map_sub:{ko:"핀을 눌러 축제로 이동하고 방문 인증하세요",en:"Tap a pin to open a festival & check in"},
-  map_slots:{ko:"도장 슬롯",en:"Stamp slots"},
-  slot_hint:{ko:"5개를 모아 지도를 완성해요",en:"Collect 5 to complete the map"},
+  map_slots:{ko:"지도 완성",en:"Map progress"},
+  map_eyebrow:{ko:"스탬프 투어",en:"Stamp tour"},
+  slot_hint:{ko:"서로 다른 축제 5곳에서 도장을 모아요",en:"Collect stamps from 5 different festivals"},
   map_list_head:{ko:"모든 축제",en:"All festivals"},visited:{ko:"방문",en:"Visited"},
   tip_done:{ko:"방문완료",en:"Visited"},
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
@@ -797,10 +798,11 @@ function renderMap(){
   });
   setTimeout(()=>map.invalidateSize(),120);
   renderSlots("mapSlots",false);
-  const done=stamps().length, pct=Math.min(100,Math.round(done/5*100));
-  document.getElementById("mapProg").style.width=pct+"%";
+  const done=stamps().length, pct=Math.min(100,Math.round(done/5*100)), left=Math.max(0,5-done);
+  const ring=document.getElementById("mapRing"); if(ring){ const C=245; ring.style.strokeDasharray=C; ring.style.strokeDashoffset=C*(1-Math.min(1,done/5)); }
   const mc=document.getElementById("mapCount"); if(mc) mc.textContent=Math.min(5,done);
-  const mp=document.getElementById("mapPct"); if(mp) mp.textContent=tv({ko:`제주 지도 ${pct}% 완성`,en:`Jeju map ${pct}% complete`});
+  const badge=document.getElementById("mapBadge"); if(badge) badge.textContent=tv({ko:`완성도 ${pct}%`,en:`${pct}% complete`});
+  const mp=document.getElementById("mapPct"); if(mp) mp.textContent=left? tv({ko:`완성까지 ${left}개 남았어요`,en:`${left} stamp${left===1?"":"s"} to go`}) : tv({ko:"지도 완성! 🎉",en:"Map complete! 🎉"});
   // legend overlay
   const leg=document.getElementById("mapLegend");
   if(leg) leg.innerHTML=CATS.map(c=>`<span class="lg"><i style="background:${CATCOLOR[c]}"></i>${t(c)}</span>`).join("")
