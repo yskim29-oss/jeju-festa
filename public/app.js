@@ -111,6 +111,9 @@ const STR = {
   intro_5_t:{ko:"지금,\n지도를 완성하러 가요",en:"Now — go\ncomplete the map"},
   intro_5_s:{ko:"5개의 도장을 모아 나만의 제주 지도를 완성하세요.",en:"Collect 5 stamps to complete your own map of Jeju."},
   rank_title:{ko:"랭킹",en:"Ranking"},rank_sub:{ko:"이번 시즌 도장을 가장 많이 모은 여행자들",en:"Top stamp collectors this season"},
+  rank_top3:{ko:"이번 시즌 TOP 3",en:"This season's top 3"},rank_board:{ko:"전체 순위",en:"Full standings"},
+  rank_players:{ko:"{n}명 참가",en:"{n} travelers"},rank_you:{ko:"내 순위",en:"Your rank"},
+  rank_gap:{ko:"한 계단 오르려면 {n}개",en:"{n} more to climb a rank"},rank_top:{ko:"현재 선두예요! 🎉",en:"You're in the lead! 🎉"},
   back:{ko:"뒤로",en:"Back"},
   all:{ko:"전체",en:"All"},eco:{ko:"생태·환경",en:"Eco"},tradition:{ko:"전통문화",en:"Tradition"},agri:{ko:"농수산물",en:"Local food"},leisure:{ko:"레저·체험",en:"Leisure"},
   green_only:{ko:"지속가능",en:"Sustainable"},green_badge:{ko:"지속가능",en:"Sustainable"},
@@ -1242,25 +1245,51 @@ async function renderRank(){
   if(!board.some(b=>b.userId===ME.id)) board.push({name:ME.name,avatar:ME.avatar,count:stamps().length,userId:ME.id});
   board.sort((a,b)=>b.count-a.count);
   const max=Math.max(1,...board.map(b=>b.count));
+  const myIdx=board.findIndex(b=>b.userId===ME.id);
   const top=board.slice(0,3), rest=board.slice(3);
-  const medals=["🥇","🥈","🥉"], podCls=["pod1","pod2","pod3"];
-  const podium=top.length?`<div class="podium">${top.map((p,i)=>{ const me=p.userId===ME.id;
-    return `<div class="pod ${podCls[i]} ${me?'me':''}">
-      <div class="pod-rank">${i+1}</div>
-      <div class="pod-medal">${medals[i]}</div>
-      <div class="pod-av">${p.avatar||"🙂"}</div>
-      <div class="pod-name">${esc(p.name)}${me?" · "+t("me"):""}</div>
-      <div class="pod-count"><b>${p.count}</b>${svg("i-medal")}</div>
+
+  /* podium — champions layout: silver | gold | bronze */
+  const medals=["🥇","🥈","🥉"], layout=[1,0,2];
+  const pods=layout.map(i=>{
+    const p=top[i]; if(!p) return `<div class="lb-pod lb-pod-${i+1} empty"></div>`;
+    const me=p.userId===ME.id;
+    return `<div class="lb-pod lb-pod-${i+1}${me?" me":""}">
+      ${i===0?`<div class="lb-crown">👑</div>`:""}
+      <div class="lb-pod-av">${p.avatar||"🙂"}<i class="lb-pod-medal">${medals[i]}</i></div>
+      <div class="lb-pod-name">${esc(p.name)}${me?`<span class="lb-tag">${t("me")}</span>`:""}</div>
+      <div class="lb-pod-count"><b>${p.count}</b>${svg("i-medal","icon sm")}</div>
+      <div class="lb-pod-base"><span>${i+1}</span></div>
+    </div>`;
+  }).join("");
+  const podium=top.length?`<div class="lb-head"><span class="lb-eyebrow">🏆 ${t("rank_top3")}</span><span class="lb-players">${t("rank_players").replace("{n}",board.length)}</span></div><div class="lb-podium">${pods}</div>`:"";
+
+  /* your-rank spotlight (only if not already on the podium) */
+  let mine="";
+  if(myIdx>=3){
+    const meRow=board[myIdx];
+    const above=board[myIdx-1];
+    const gap = above ? t("rank_gap").replace("{n}", Math.max(1, above.count-meRow.count+1)) : t("rank_top");
+    mine=`<div class="lb-me">
+      <span class="lb-me-rk">#${myIdx+1}</span>
+      <div class="lb-me-av">${meRow.avatar||"🙂"}</div>
+      <div class="lb-me-main"><div class="lb-me-name">${esc(meRow.name)} <span class="lb-tag">${t("me")}</span></div><div class="lb-me-gap">${gap}</div></div>
+      <span class="lb-me-count"><b>${meRow.count}</b>${svg("i-medal","icon sm")}</span>
+    </div>`;
+  }
+
+  /* full standings (ranks 4+) */
+  const list=rest.length?`<div class="lb-boardhead">${svg("i-medal","icon sm")}<span>${t("rank_board")}</span></div><div class="lb-list">${rest.map((p,i)=>{
+    const me=p.userId===ME.id, w=Math.round(p.count/max*100);
+    // me is already surfaced in the spotlight card above, so keep the row subtle (tag only)
+    return `<div class="lb-row${(me&&myIdx<3)?" me":""}" style="--d:${Math.min(i,10)*35}ms">
+      <span class="lb-rk">${i+4}</span>
+      <div class="lb-av">${p.avatar||"🙂"}</div>
+      <div class="lb-main"><div class="lb-name">${esc(p.name)}${me?`<span class="lb-tag">${t("me")}</span>`:""}</div>
+        <div class="lb-bar"><i style="width:${w}%"></i></div></div>
+      <span class="lb-count"><b>${p.count}</b>${svg("i-medal","icon sm")}</span>
     </div>`; }).join("")}</div>`:"";
-  const list=rest.length?`<div class="ranklist">${rest.map((p,i)=>{ const me=p.userId===ME.id, w=Math.round(p.count/max*100);
-    return `<div class="rrow ${me?'me':''}">
-      <span class="rr-k">${i+4}</span>
-      <div class="rr-av">${p.avatar||"🙂"}</div>
-      <div class="rr-main"><div class="rr-name">${esc(p.name)}${me?`<span class="metag">${t("me")}</span>`:""}</div>
-        <div class="rr-bar"><i style="width:${w}%"></i></div></div>
-      <span class="rr-count"><b>${p.count}</b>${svg("i-medal")}</span>
-    </div>`; }).join("")}</div>`:"";
-  document.getElementById("rankList").innerHTML=podium+list;
+
+  document.getElementById("rankList").innerHTML=podium+mine+list;
   startRankCountdown();
 }
 /* live monthly season countdown (D-day + live clock + month-progress bar) */
