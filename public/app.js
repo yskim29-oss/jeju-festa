@@ -21,7 +21,22 @@ const STR = {
   err_google_failed:{ko:"구글 로그인에 실패했어요.",en:"Google sign-in failed."},
   or:{ko:"또는",en:"or"},
 
-  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},
+  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},nav_about:{ko:"소개",en:"About"},
+  about_eyebrow:{ko:"제주 축제 도장 · 소개",en:"Jeju Festa · About"},
+  about_title:{ko:"축제를 즐기며,\n제주를 지켜요",en:"Enjoy the festivals,\nprotect Jeju"},
+  about_sub:{ko:"제주의 지속가능한 축제를 발견하고, 도장을 모으며, 함께 자연을 지키는 여행 커뮤니티예요.",en:"A travel community for discovering Jeju's sustainable festivals, collecting stamps, and protecting nature together."},
+  about_mission_lab:{ko:"우리의 목표",en:"Our mission"},
+  about_mission:{ko:"제주를 여행하는 일이 곧 제주를 지키는 일이 되도록 — 지속가능한 축제를 쉽게 찾고, 즐겁게 실천하게 만드는 것.",en:"To make traveling Jeju the same as caring for it — making sustainable festivals easy to find and genuinely fun to take part in."},
+  about_why_kicker:{ko:"왜 만들었나요",en:"Why we built this"},
+  about_why_title:{ko:"작은 불편에서 시작했어요",en:"It started with a small frustration"},
+  about_how_kicker:{ko:"어떻게 작동하나요",en:"How it works"},
+  about_how_title:{ko:"발견부터 실천까지, 네 걸음",en:"From discovery to action, in four steps"},
+  about_values_kicker:{ko:"우리가 지키는 것",en:"What we stand for"},
+  about_values_title:{ko:"세 가지 약속",en:"Three promises"},
+  about_cta_title:{ko:"이제, 제주를 함께 걸어요",en:"Now, let's walk Jeju together"},
+  about_cta_sub:{ko:"지도에서 가까운 지속가능 축제부터 찾아보세요.",en:"Start with a sustainable festival near you on the map."},
+  about_cta_map:{ko:"지도에서 시작하기",en:"Start on the map"},
+  about_cta_faq:{ko:"자주 묻는 질문",en:"Read the FAQ"},
   faq_eyebrow:{ko:"도움말 센터",en:"Help center"},
   faq_title:{ko:"무엇이 궁금하세요?",en:"How can we help?"},
   faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
@@ -325,7 +340,7 @@ function setLang(l){
 }
 
 /* ================= nav ================= */
-const NAV=["home","map","search","my","rank","faq"];
+const NAV=["home","about","map","search","my","rank","faq"];
 function go(view,fromPop){
   document.querySelectorAll("section.view").forEach(s=>s.classList.remove("on"));
   document.getElementById("v-"+view).classList.add("on");
@@ -336,6 +351,7 @@ function go(view,fromPop){
   if(view==="search") renderSearch();
   if(view==="my") renderMy();
   if(view==="rank") renderRank(); else stopRankCountdown();
+  if(view==="about") renderAbout();
   if(view==="faq") renderFaq();
   route({view},fromPop);
 }
@@ -361,6 +377,75 @@ function cycleNav(){ const cur=document.querySelector("section.view.on").id.repl
 function toggleNavMenu(e){ if(e) e.stopPropagation(); document.getElementById("navDrop").classList.toggle("open"); }
 function navPick(v){ document.getElementById("navDrop").classList.remove("open"); go(v); }
 document.addEventListener("click",()=>{ const d=document.getElementById("navDrop"); if(d) d.classList.remove("open"); });
+
+/* ================= ABOUT ================= */
+function renderAbout(){
+  const w=document.getElementById("aboutWrap"); if(!w) return;
+  const L=(ko,en)=>tv({ko,en});
+  const why=[
+    {ic:"🎪", t:L("정보가 흩어져 있어요","Scattered information"),
+      d:L("제주엔 사계절 축제가 넘치지만, 어떤 축제가 환경을 생각하는지 한곳에서 알기 어려워요.","Jeju overflows with festivals year-round, but it's hard to tell in one place which ones actually care about the environment.")},
+    {ic:"🗑️", t:L("여행은 흔적을 남겨요","Travel leaves a mark"),
+      d:L("축제는 특히 일회용품과 혼잡이 많아, 즐기는 사이에 쓰레기와 탄소가 쌓이기 쉬워요.","Festivals bring single-use waste and crowds — it's easy to leave a footprint while having fun.")},
+    {ic:"🧭", t:L("좋은 선택을 돕고 싶었어요","We wanted to guide better choices"),
+      d:L("여행자가 '지속가능한 선택'을 하고 싶어도 근거가 부족했어요. 그래서 실천을 여행의 재미로 바꿨어요.","Travelers want to choose sustainably but lacked the evidence — so we turned good practice into part of the fun.")},
+  ];
+  const steps=[
+    {t:L("발견하세요","Discover"),
+      d:L("지도·캘린더·검색으로 제주의 지속가능 축제를 한눈에 찾아요.","Find Jeju's sustainable festivals at a glance via the map, calendar, and search.")},
+    {t:L("방문하고 인증해요","Visit & verify"),
+      d:L("현장에서 위치·QR·티켓으로 방문을 인증하고 '도장'을 받아요.","Check in on-site by location, QR, or ticket photo to earn a stamp.")},
+    {t:L("도장을 모아요","Collect stamps"),
+      d:L("서로 다른 축제 5곳의 도장을 모아 제주 지도를 완성하고 보상을 받아요.","Collect 5 stamps from different festivals to complete your Jeju map and unlock rewards.")},
+    {t:L("함께 지켜요","Protect together"),
+      d:L("후기와 지속가능 체감도를 남겨 다음 여행자의 선택을 도와요.","Leave reviews and sustainability ratings to guide the next traveler.")},
+  ];
+  const values=[
+    {ic:"🌱", t:L("지속가능성 우선","Sustainability first"), d:L("환경을 생각한 축제를 앞세워요.","We put eco-minded festivals front and center.")},
+    {ic:"🤝", t:L("함께 만드는 기록","Built together"), d:L("실제 방문자의 경험이 곧 데이터가 돼요.","Real visitors' experiences become the data.")},
+    {ic:"🔍", t:L("정직한 숫자","Honest numbers"), d:L("기준값과 실제 데이터를 투명하게 밝혀요.","We're open about baselines vs. real data.")},
+  ];
+  w.innerHTML=`
+    <header class="abt-hero">
+      <span class="abt-ey">${t("about_eyebrow")}</span>
+      <h1 class="abt-t">${nl2br(t("about_title"))}</h1>
+      <p class="abt-s">${t("about_sub")}</p>
+    </header>
+
+    <div class="abt-mission">
+      <span class="abt-mission-lab">${t("about_mission_lab")}</span>
+      <p class="abt-mission-txt">${t("about_mission")}</p>
+    </div>
+
+    <section class="abt-sec">
+      <div class="abt-sec-head"><span class="abt-kicker">${t("about_why_kicker")}</span><h2>${t("about_why_title")}</h2></div>
+      <div class="abt-why">
+        ${why.map(x=>`<div class="abt-card"><span class="abt-card-ic">${x.ic}</span><h3>${x.t}</h3><p>${x.d}</p></div>`).join("")}
+      </div>
+    </section>
+
+    <section class="abt-sec">
+      <div class="abt-sec-head"><span class="abt-kicker">${t("about_how_kicker")}</span><h2>${t("about_how_title")}</h2></div>
+      <div class="abt-steps">
+        ${steps.map((x,i)=>`<div class="abt-step"><span class="abt-step-n">${String(i+1).padStart(2,"0")}</span><div class="abt-step-b"><h3>${x.t}</h3><p>${x.d}</p></div></div>`).join("")}
+      </div>
+    </section>
+
+    <section class="abt-sec">
+      <div class="abt-sec-head"><span class="abt-kicker">${t("about_values_kicker")}</span><h2>${t("about_values_title")}</h2></div>
+      <div class="abt-values">
+        ${values.map(x=>`<div class="abt-val"><span class="abt-val-ic">${x.ic}</span><div><h4>${x.t}</h4><p>${x.d}</p></div></div>`).join("")}
+      </div>
+    </section>
+
+    <div class="abt-cta">
+      <div class="abt-cta-txt"><h3>${t("about_cta_title")}</h3><p>${t("about_cta_sub")}</p></div>
+      <div class="abt-cta-btns">
+        <button class="btn btn-lime btn-sm" onclick="go('map')">${t("about_cta_map")}</button>
+        <button class="btn btn-ghost btn-sm" onclick="go('faq')">${t("about_cta_faq")}</button>
+      </div>
+    </div>`;
+}
 
 /* ================= FAQ ================= */
 const FAQ=[
