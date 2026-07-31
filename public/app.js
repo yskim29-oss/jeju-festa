@@ -90,6 +90,11 @@ const STR = {
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
   my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표",en:"Goal"},logout:{ko:"로그아웃",en:"Log out"},
   my_stamps:{ko:"내가 모은 도장",en:"My stamps"},
+  passport_label:{ko:"제주 축제 여권",en:"Jeju Festa Passport"},
+  pp_member:{ko:"회원번호",en:"Member No."},
+  pp_next:{ko:"다음 레벨까지 {n}개",en:"{n} more to next level"},
+  pp_complete:{ko:"제주 지도를 완성했어요! 🎉",en:"You completed the Jeju map! 🎉"},
+  stamp_explore:{ko:"축제 찾기",en:"Find a festival"},
   st_stamps:{ko:"모은 도장",en:"Stamps"},st_progress:{ko:"진행률",en:"Progress"},st_rank:{ko:"내 순위",en:"My rank"},
   intro_skip:{ko:"건너뛰기",en:"Skip"},intro_scroll:{ko:"아래로 스크롤",en:"Scroll down"},intro_replay:{ko:"소개 다시 보기",en:"Watch the intro again"},intro_start:{ko:"시작하기",en:"Get started"},
   intro_1_t:{ko:"제주의 축제를,\n지속가능하게",en:"Jeju's festivals,\nmade sustainable"},
@@ -1141,36 +1146,72 @@ async function saveProfile(){
   }catch(e){ setProfileErr(t("err_network")); }
 }
 
+function renderMyStampBook(){
+  const el=document.getElementById("sbook"); if(!el) return;
+  const got=stamps().slice(0,5); let h="";
+  for(let i=0;i<5;i++){
+    const fid=got[i], f=fid?FEST.find(x=>x.id===fid):null;
+    if(f){
+      h+=`<button class="sb-card filled" style="--c:${CATCOLOR[f.cat]||'#2F9E62'}" onclick="openDetail(${f.id})">
+        <span class="sb-num">${i+1}</span>
+        <span class="sb-badge">${svg("i-check","icon sm")}</span>
+        <span class="sb-stamp">${f.stamp||"🎫"}</span>
+        <span class="sb-name">${esc(tv(f.name))}</span>
+      </button>`;
+    } else {
+      h+=`<button class="sb-card empty" onclick="go('map')">
+        <span class="sb-num">${i+1}</span>
+        <span class="sb-lock">${svg("i-medal","icon")}</span>
+        <span class="sb-hint">${t("stamp_explore")}</span>
+      </button>`;
+    }
+  }
+  el.innerHTML=h;
+}
 function renderMy(){
   const n=stamps().length;
   const lvl=t(n>=5?"lvl5":n>=3?"lvl3":n>=1?"lvl1":"lvl0");
   const pct=Math.round(Math.min(100,n/5*100));
-  const C=326.73, off=C*(1-Math.min(1,n/5));
+  const C=245, off=C*(1-Math.min(1,n/5));
+  const memberNo=String(ME.id||"000000").replace(/[^a-z0-9]/gi,"").slice(0,6).toUpperCase().padEnd(6,"0");
+  const nextAt = n>=5?null : n>=3?5 : n>=1?3 : 1;
+  const nextTxt = nextAt ? t("pp_next").replace("{n}", nextAt-n) : t("pp_complete");
   const rewards=[{k:1,icon:"🏅",tt:"r1_t",dd:"r1_d"},{k:3,icon:"🎟️",tt:"r3_t",dd:"r3_d"},{k:5,icon:"🎁",tt:"r5_t",dd:"r5_d"}];
   document.getElementById("myBody").innerHTML=`
-    <div class="my-hero">
-      <div class="mh-id">
-        <div class="mh-av">${ME.avatar||"🧑‍🌾"}</div>
-        <div>
-          <div class="mh-name">${esc(ME.name||t("me"))}</div>
-          <div class="mh-lvl">${svg("i-leaf")}${lvl}</div>
-          <div class="mh-prog"><i style="width:${pct}%"></i></div>
-          <div class="mh-progtxt">${t("st_progress")} ${pct}%</div>
-          <button class="mh-edit" onclick="openProfile()">${svg("i-camera","icon sm")}${t("edit_profile")}</button>
+    <section class="pp">
+      <div class="pp-guilloche" aria-hidden="true"></div>
+      <div class="pp-top">
+        <span class="pp-brand">${svg("i-leaf","icon sm")}<span>${t("passport_label")}</span></span>
+        <button class="pp-edit" onclick="openProfile()">${svg("i-camera","icon sm")}${t("edit_profile")}</button>
+      </div>
+      <div class="pp-body">
+        <div class="pp-photo">${ME.avatar||"🧑‍🌾"}</div>
+        <div class="pp-info">
+          <div class="pp-name">${esc(ME.name||t("me"))}</div>
+          <div class="pp-lvl">${svg("i-medal","icon sm")}<span>${lvl}</span></div>
+          <div class="pp-no"><span>${t("pp_member")}</span><b>JF-${memberNo}</b></div>
+        </div>
+        <div class="pp-ring">
+          <svg viewBox="0 0 90 90"><circle class="bg" cx="45" cy="45" r="39"/><circle class="fg" cx="45" cy="45" r="39" style="stroke-dasharray:${C};stroke-dashoffset:${off}"/></svg>
+          <div class="pp-ring-txt"><b>${n}<i>/5</i></b><span>${t("st_stamps")}</span></div>
         </div>
       </div>
-      <div class="ringwrap">
-        <svg class="ring" viewBox="0 0 120 120">
-          <defs><linearGradient id="ringgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E0F10"/><stop offset="1" stop-color="#2F6B1E"/></linearGradient></defs>
-          <circle class="ring-bg" cx="60" cy="60" r="52"/>
-          <circle class="ring-fg" cx="60" cy="60" r="52" style="stroke:url(#ringgrad);stroke-dasharray:${C};stroke-dashoffset:${off}"/>
-        </svg>
-        <div class="ring-txt"><b>${n}<i>/5</i></b><span>${t("my_goal")}</span></div>
+      <div class="pp-foot">
+        <div class="pp-progress"><i style="width:${pct}%"></i></div>
+        <span class="pp-next">${nextTxt}</span>
       </div>
+    </section>
+
+    <div class="myst">
+      <div class="myst-tile"><span class="myst-ic">🎫</span><b>${n}</b><span>${t("st_stamps")}</span></div>
+      <div class="myst-tile"><span class="myst-ic">📊</span><b>${pct}<i>%</i></b><span>${t("st_progress")}</span></div>
+      <div class="myst-tile"><span class="myst-ic">🏆</span><b id="myRankVal">—</b><span>${t("st_rank")}</span></div>
     </div>
-    <div class="sectlabel">${svg("i-medal")}${t("my_stamps")}</div>
-    <div class="slots light" id="mySlots"></div>
-    <div class="sectlabel">${svg("i-gift")}${t("my_rewards")}</div>
+
+    <div class="my-sec-head"><h3>${t("my_stamps")}</h3><span>${n}/5</span></div>
+    <div class="sbook" id="sbook"></div>
+
+    <div class="my-sec-head"><h3>${t("my_rewards")}</h3></div>
     <div class="rewards2">${rewards.map(r=>{
       const ok=n>=r.k, cur=Math.min(n,r.k), w=Math.round(cur/r.k*100);
       return `<div class="rcard ${ok?'on':''}">
@@ -1181,7 +1222,15 @@ function renderMy(){
         <div class="rstat2">${ok?svg("i-check","icon sm")+t("unlocked"):cur+" / "+r.k}</div>
       </div>`; }).join("")}</div>
     <button class="logoutbtn" onclick="logout()">${svg("i-logout","icon sm")} ${t("logout")}</button>`;
-  renderSlots("mySlots",false);
+  renderMyStampBook();
+  // async: fetch my monthly rank into the stat tile
+  api("/leaderboard").then(d=>{
+    let board=(d&&d.leaderboard)||[];
+    if(!board.some(b=>b.userId===ME.id)) board=board.concat([{userId:ME.id,count:n}]);
+    board.sort((a,b)=>b.count-a.count);
+    const idx=board.findIndex(b=>b.userId===ME.id);
+    const el=document.getElementById("myRankVal"); if(el&&idx>=0) el.textContent="#"+(idx+1);
+  }).catch(()=>{});
 }
 
 /* ================= RANK ================= */
