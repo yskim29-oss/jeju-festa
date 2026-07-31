@@ -388,10 +388,6 @@ const FAQ=[
        en:"Where does the festival info and dates come from?"},
     a:{ko:"편집팀이 정리한 제주 지속가능 축제 목록에, <b>한국관광공사 TourAPI</b>의 실시간 축제 데이터를 더해 보여줘요. 실시간으로 불러온 축제에는 <b>● LIVE</b> 표시가 붙어요. 정보가 바뀔 수 있으니 방문 전 공식 홈페이지도 함께 확인해 주세요.",
        en:"We combine an editor-curated list of Jeju's sustainable festivals with live festival data from the <b>Korea Tourism Organization TourAPI</b>. Live-loaded festivals carry a <b>● LIVE</b> badge. Details can change, so please double-check the official homepage before you go."} },
-  { q:{ko:"홈 화면의 숫자(회원·방문 등)는 진짜인가요?",
-       en:"Are the numbers on the home page real?"},
-    a:{ko:"네, 실제 활동을 반영해요. 새로운 가입, 축제 방문 인증, 사이트 방문이 일어나면 그만큼 올라가요. 다만 서비스 초기라 <b>출범 기준의 기본 수치 위에 실제 데이터가 더해지는</b> 방식이라는 점은 솔직히 밝혀둘게요.",
-       en:"Yes — they reflect real activity, rising as people sign up, check in at festivals, and visit the site. In full honesty, since the service is young, <b>real data is added on top of a launch baseline</b> rather than starting from zero."} },
   { q:{ko:"랭킹은 어떻게 정해지고, 언제 초기화되나요?",
        en:"How is the ranking calculated, and when does it reset?"},
     a:{ko:"랭킹은 <b>이번 달에 모은 도장 수</b>를 기준으로 하고, <b>매월 1일에 초기화</b>돼요. 실제 사용자가 우선 표시되고, 참여자가 적은 달에는 예시 사용자로 채워질 수 있어요.",
@@ -406,7 +402,7 @@ const FAQ=[
        en:"Please tell us through the <b>report card at the bottom of the home page</b>. We'll review it and fix things as fast as we can."} },
 ];
 /* category per FAQ item (index-aligned with FAQ) + chip labels */
-const FAQ_CAT=["score","score","score","stamp","score","data","data","stamp","data","data"];
+const FAQ_CAT=["score","score","score","stamp","score","data","stamp","data","data"];
 const FAQ_CATS=[
   {k:"all",  ko:"전체",         en:"All"},
   {k:"score",ko:"점수·신뢰",     en:"Scores & trust"},
