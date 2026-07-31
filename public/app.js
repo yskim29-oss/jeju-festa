@@ -676,6 +676,16 @@ function renderSearch(){
 function clearSearch(){ const i=document.getElementById("searchInput"); if(i){ i.value=""; i.focus(); } renderSearch(); }
 
 /* ================= DETAIL ================= */
+/* score meter card — shows value out of a fixed max (5) with a proportional fill */
+function meterCard(cls,icon,val,label,max){
+  max=max||5; val=+val||0;
+  const pct=Math.max(3,Math.min(100,(val/max)*100));
+  return `<div class="metric ${cls}">
+    <div class="m-top"><span class="m-ic">${icon}</span><span class="m-val">${val.toFixed(1)}<i>/ ${max}</i></span></div>
+    <div class="m-bar"><span style="width:${pct.toFixed(1)}%"></span></div>
+    <div class="lab">${label}</div>
+  </div>`;
+}
 let curDetail=null, rvRating=5, rvSus=5;
 async function openDetail(id,fromPop){
   curDetail=id; rvRating=5; rvSus=5;
@@ -699,8 +709,8 @@ async function openDetail(id,fromPop){
       </div>
       <div class="dside">
         <div class="metrics">
-          <div class="metric"><div class="big" style="color:var(--star)">★ ${f.ratingAvg.toFixed(1)}</div><div class="lab">${t("rating")}</div></div>
-          <div class="metric"><div class="big" style="color:var(--green)">♻ ${f.susAvg.toFixed(1)}</div><div class="lab">${t("sustainability")}</div></div>
+          ${meterCard("m-star","★",f.ratingAvg,t("rating"))}
+          ${meterCard("m-green","♻",f.susAvg,t("sustainability"))}
         </div>
         ${f.info&&Object.keys(f.info).length?`<div class="dcard">
           <div class="infohd">${svg("i-flag")}${t("event_info")}</div>
