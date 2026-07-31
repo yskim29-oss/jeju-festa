@@ -493,15 +493,17 @@ function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(c
 
 /* ================= HOME ================= */
 function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); renderHomeStats(); animateHomeIn(); }
+let _impact=null;
 function renderHomeStats(){
-  const el=document.getElementById("homeStats"); if(!el || el.dataset.loaded) return;
-  el.dataset.loaded="1";
-  api("/impact").then(d=>{
+  const el=document.getElementById("homeStats"); if(!el) return;
+  if(el.dataset.lang===lang) return;                 // already showing the current language
+  const build=(d,animate)=>{
+    el.dataset.lang=lang;
     const row=(cu,lab)=>`<div class="hst-line"><span>${lab}</span><b data-cu="${cu}">0</b></div>`;
     el.innerHTML=`<div class="hst">
       <div class="hst-main">
         <span class="hst-over">${t("home_stats_eyebrow")}</span>
-        <div class="hst-big"><b data-cu="u">0</b><i>${t("home_stats_ppl")}</i></div>
+        <div class="hst-big"><b data-cu="u">0</b><i>${lang==="ko"?"명":""}</i></div>
         <p class="hst-sub">${t("home_stats_sub")}</p>
       </div>
       <div class="hst-perf" aria-hidden="true"></div>
@@ -512,20 +514,24 @@ function renderHomeStats(){
         <div class="hst-foot">${t("home_stats_live")}</div>
       </div>
     </div>`;
+    const set=(cu,v)=>{ const n=el.querySelector('[data-cu="'+cu+'"]'); if(n) n.textContent=Math.round(v).toLocaleString("en-US"); };
     const runCount=()=>{
       countUp(el.querySelector('[data-cu="u"]'),d.travelers,{dur:1400});
       countUp(el.querySelector('[data-cu="s"]'),d.signups,{dur:1200});
       countUp(el.querySelector('[data-cu="v"]'),d.stamps,{dur:1300});
       countUp(el.querySelector('[data-cu="w"]'),d.views,{dur:1500});
     };
-    // count up only when the ticket scrolls into view (not on render, so it isn't missed below the fold)
+    if(!animate){ set("u",d.travelers); set("s",d.signups); set("v",d.stamps); set("w",d.views); return; } // lang re-render: show final
+    // first render: count up only when the ticket scrolls into view (so it isn't missed below the fold)
     const card=el.querySelector(".hst");
     if(document.hidden || !("IntersectionObserver" in window) || !card){ runCount(); return; }
     let done=false; const go=()=>{ if(done)return; done=true; runCount(); };
     const io=new IntersectionObserver((ents)=>{ ents.forEach(en=>{ if(en.isIntersecting){ go(); io.disconnect(); } }); },{threshold:0.25});
     io.observe(card);
     setTimeout(go,4000); // safety: never leave the numbers stuck at 0
-  }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
+  };
+  if(_impact){ build(_impact,false); return; }        // language toggle → re-render from cache, no refetch
+  api("/impact").then(d=>{ _impact=d; build(d,true); }).catch(()=>{ el.dataset.lang=""; });
 }
 /* home entrance + scroll-reveal animations.
    Elements are visible by default; `.in` (added by the observer as they approach the viewport)
