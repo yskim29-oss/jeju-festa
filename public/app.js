@@ -26,6 +26,10 @@ const STR = {
   faq_title:{ko:"무엇이 궁금하세요?",en:"How can we help?"},
   faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
   faq_footer:{ko:"자주 묻는 질문",en:"FAQ"},
+  faq_search_ph:{ko:"질문 검색…",en:"Search questions…"},
+  faq_clear:{ko:"검색 지우기",en:"Clear search"},
+  faq_no_results:{ko:"검색 결과가 없어요",en:"No matching questions"},
+  faq_no_results_sub:{ko:"다른 키워드로 다시 검색해 보세요.",en:"Try searching with a different keyword."},
   faq_more:{ko:"더 궁금한 점이 있나요?",en:"Still have a question?"},
   faq_more_sub:{ko:"홈 하단의 문의 카드로 남겨주시면 확인하고 답해드릴게요.",en:"Leave it in the report card at the bottom of the home page and we'll get back to you."},
   faq_more_btn:{ko:"문의 남기기",en:"Send a message"},
@@ -419,34 +423,86 @@ const FAQ_CATS=[
   {k:"stamp",ko:"도장·참여",     en:"Stamps & play"},
   {k:"data", ko:"데이터·개인정보",en:"Data & privacy"},
 ];
-let faqCat="all";
+let faqCat="all", faqQuery="";
 function setFaqCat(k){ faqCat=k; renderFaq(); }
+function faqStrip(h){ return String(h).replace(/<[^>]+>/g,""); }
+function faqHi(text,q){
+  if(!q) return esc(text);
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+q.length))+"</mark>"+esc(text.slice(i+q.length));
+}
+function faqMatches(){
+  const q=faqQuery.trim().toLowerCase();
+  return FAQ.map((it,idx)=>({it,idx})).filter(o=>{
+    if(faqCat!=="all" && FAQ_CAT[o.idx]!==faqCat) return false;
+    if(!q) return true;
+    return (tv(o.it.q)+" "+faqStrip(tv(o.it.a))).toLowerCase().includes(q);
+  });
+}
+function faqCountText(){ const n=faqMatches().length; return lang==="ko" ? `총 ${n}개의 질문` : `${n} question${n===1?"":"s"}`; }
+function faqItemsHTML(){
+  const q=faqQuery.trim();
+  const list=faqMatches();
+  if(!list.length) return `<div class="fqx-empty">
+      <div class="fqx-empty-ic">🔍</div>
+      <h3>${t("faq_no_results")}</h3><p>${t("faq_no_results_sub")}</p>
+      <button class="btn btn-ghost btn-sm" onclick="faqClearSearch()">${t("faq_clear")}</button>
+    </div>`;
+  return list.map((o,i)=>`<div class="fqx-item${(i===0&&!q)?" open":""}" style="--d:${i*45}ms">
+      <button class="fqx-q" aria-expanded="${(i===0&&!q)?"true":"false"}" onclick="faqToggle(this)">
+        <span class="fqx-n">${String(i+1).padStart(2,"0")}</span>
+        <span class="fqx-qt">${faqHi(tv(o.it.q),q)}</span>
+        <span class="fqx-ic" aria-hidden="true"></span>
+      </button>
+      <div class="fqx-panel"><div class="fqx-a">${tv(o.it.a)}</div></div>
+    </div>`).join("");
+}
+function updateFaqList(){
+  const l=document.getElementById("faqList"); if(l) l.innerHTML=faqItemsHTML();
+  const c=document.getElementById("faqCount"); if(c) c.textContent=faqCountText();
+}
+function faqSearchInput(v){
+  faqQuery=v; updateFaqList();
+  const c=document.getElementById("faqClear"); if(c) c.style.display=v?"grid":"none";
+}
+function faqClearSearch(){
+  faqQuery=""; const inp=document.getElementById("faqSearch"); if(inp){ inp.value=""; inp.focus(); }
+  updateFaqList(); const c=document.getElementById("faqClear"); if(c) c.style.display="none";
+}
+function faqToggle(btn){
+  const item=btn.closest(".fqx-item");
+  const willOpen=!item.classList.contains("open");
+  item.parentElement.querySelectorAll(".fqx-item.open").forEach(o=>{ o.classList.remove("open"); const b=o.querySelector(".fqx-q"); if(b) b.setAttribute("aria-expanded","false"); });
+  if(willOpen){ item.classList.add("open"); btn.setAttribute("aria-expanded","true"); }
+}
 function renderFaq(){
   const w=document.getElementById("faqWrap"); if(!w) return;
-  const chips=FAQ_CATS.map(c=>{
+  const cats=FAQ_CATS.map(c=>{
     const n=c.k==="all"?FAQ.length:FAQ_CAT.filter(x=>x===c.k).length;
-    return `<button class="faqchip${faqCat===c.k?' on':''}" onclick="setFaqCat('${c.k}')">${tv(c)}<span>${n}</span></button>`;
+    return `<button class="faqx-cat${faqCat===c.k?" on":""}" onclick="setFaqCat('${c.k}')"><span>${tv(c)}</span><b>${n}</b></button>`;
   }).join("");
-  const list=FAQ.map((it,idx)=>({it,idx})).filter(o=>faqCat==="all"||FAQ_CAT[o.idx]===faqCat);
-  const items=list.map((o,i)=>`<details class="faqitem"${i===0?" open":""}>
-      <summary>
-        <span class="faq-n">${String(i+1).padStart(2,"0")}</span>
-        <span class="faq-q">${tv(o.it.q)}</span>
-        <span class="faq-mk" aria-hidden="true"></span>
-      </summary>
-      <div class="faq-a">${tv(o.it.a)}</div>
-    </details>`).join("");
   w.innerHTML=`
-    <header class="faqhero">
-      <span class="faqhero-ey">${t("faq_eyebrow")}</span>
-      <h1 class="faqhero-t">${t("faq_title")}</h1>
-      <p class="faqhero-s">${t("faq_sub")}</p>
-    </header>
-    <div class="faqchips">${chips}</div>
-    <div class="faqlist">${items}</div>
-    <div class="faq-more">
-      <div class="faq-more-txt"><h3>${t("faq_more")}</h3><p>${t("faq_more_sub")}</p></div>
-      <button class="btn btn-dark btn-sm" onclick="faqToReport()">${t("faq_more_btn")}</button>
+    <div class="faqx">
+      <aside class="faqx-side">
+        <span class="faqx-ey">${t("faq_eyebrow")}</span>
+        <h1 class="faqx-t">${t("faq_title")}</h1>
+        <p class="faqx-s">${t("faq_sub")}</p>
+        <div class="faqx-search">
+          ${svg("i-search","icon sm")}
+          <input id="faqSearch" type="text" autocomplete="off" spellcheck="false" placeholder="${t("faq_search_ph")}" value="${esc(faqQuery)}" oninput="faqSearchInput(this.value)">
+          <button id="faqClear" class="faqx-clear" style="display:${faqQuery?"grid":"none"}" aria-label="${t("faq_clear")}" onclick="faqClearSearch()">✕</button>
+        </div>
+        <nav class="faqx-cats">${cats}</nav>
+        <div class="faqx-help">
+          <div class="faqx-help-t"><h4>${t("faq_more")}</h4><p>${t("faq_more_sub")}</p></div>
+          <button class="btn btn-lime btn-sm" onclick="faqToReport()">${t("faq_more_btn")}</button>
+        </div>
+      </aside>
+      <div class="faqx-main">
+        <div class="faqx-count" id="faqCount">${faqCountText()}</div>
+        <div class="faqx-list" id="faqList">${faqItemsHTML()}</div>
+      </div>
     </div>`;
 }
 function faqToReport(){ go("home"); setTimeout(()=>{ const b=document.querySelector(".bugcard"); if(b) b.scrollIntoView({behavior:"smooth",block:"center"}); },380); }
