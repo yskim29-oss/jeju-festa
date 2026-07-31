@@ -22,6 +22,13 @@ const STR = {
   or:{ko:"또는",en:"or"},
 
   nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},
+  faq_title:{ko:"자주 묻는 질문",en:"Frequently asked questions"},
+  faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
+  faq_footer:{ko:"자주 묻는 질문",en:"FAQ"},
+  faq_more:{ko:"더 궁금한 점이 있나요?",en:"Still have a question?"},
+  faq_more_sub:{ko:"홈 하단의 문의 카드로 남겨주시면 확인하고 답해드릴게요.",en:"Leave it in the report card at the bottom of the home page and we'll get back to you."},
+  faq_more_btn:{ko:"문의 남기기",en:"Send a message"},
+  detail_how_scored:{ko:"점수는 어떻게 매겨지나요?",en:"How are these scored?"},
   hero_eyebrow:{ko:"제주 지속가능 축제",en:"Jeju Sustainable Festivals"},
   hero_h1:{ko:"자연을 지키고\n축제를 즐겨요.",en:"Save Nature,\nEnjoy Festivals."},
   hero_email:{ko:"이메일을 입력하세요",en:"Enter your e-mail"},
@@ -328,6 +335,7 @@ function go(view,fromPop){
   if(view==="search") renderSearch();
   if(view==="my") renderMy();
   if(view==="rank") renderRank(); else stopRankCountdown();
+  if(view==="faq") renderFaq();
   route({view},fromPop);
 }
 /* ===== browser history (back / forward arrows) ===== */
@@ -352,6 +360,62 @@ function cycleNav(){ const cur=document.querySelector("section.view.on").id.repl
 function toggleNavMenu(e){ if(e) e.stopPropagation(); document.getElementById("navDrop").classList.toggle("open"); }
 function navPick(v){ document.getElementById("navDrop").classList.remove("open"); go(v); }
 document.addEventListener("click",()=>{ const d=document.getElementById("navDrop"); if(d) d.classList.remove("open"); });
+
+/* ================= FAQ ================= */
+const FAQ=[
+  { q:{ko:"평점(별점)은 어떻게 매겨지나요?",
+       en:"How is the star rating decided?"},
+    a:{ko:"평점은 <b>실제로 축제를 방문해 '도장'을 받은 방문자들의 별점(1~5점) 평균</b>이에요. 상세 페이지에서 방문 인증을 마치면 리뷰를 남길 수 있고, 남긴 별점이 곧바로 평균에 반영돼 소수점 첫째 자리까지 표시돼요. 아직 후기가 없는 축제는 편집팀이 정한 기준값으로 시작해, 후기가 쌓일수록 실제 평균으로 바뀝니다.",
+       en:"The rating is the <b>average of the 1–5 star scores left by visitors who actually attended and earned the festival's stamp</b>. Once you verify your visit on the detail page you can post a review, and your score folds straight into the average (shown to one decimal). Festivals without reviews yet start from an editor-set baseline and shift to the real average as reviews come in."} },
+  { q:{ko:"'지속가능 체감도'는 어떤 기준인가요?",
+       en:"What exactly is the 'sustainability' score based on?"},
+    a:{ko:"별점과 마찬가지로 <b>방문 인증을 한 사람이 \"이 축제가 얼마나 지속가능하게 느껴졌는지\"를 1~5점으로 매긴 평균</b>이에요. '점수'가 아니라 '체감도'라고 부르는 이유는, 전문가 심사가 아니라 현장을 직접 겪은 방문자의 경험을 모은 값이기 때문이에요. 다회용기 푸드존, 차 없는 거리, 조명 최소화, 비건·로컬 마켓, 플로깅 같은 실제 운영이 점수에 반영돼요. 각 축제의 <b>'지속가능 포인트'</b> 목록에서 그 근거를 직접 확인할 수 있어요.",
+       en:"Like the rating, it's the <b>average 1–5 score that verified visitors give to how sustainable the festival felt</b>. We call it a 'felt' score rather than an official grade because it aggregates the experience of people who were actually there — not an expert audit. Real practices like reusable-ware food zones, car-free streets, minimal lighting, vegan/local markets and plogging feed into it, and you can see the evidence in each festival's <b>Sustainability points</b> list."} },
+  { q:{ko:"♻ 초록(지속가능) 태그가 붙는 기준은?",
+       en:"What makes a festival get the green ♻ tag?"},
+    a:{ko:"친환경 운영 요소가 뚜렷한 축제에 붙이는 표시예요. 쓰레기·탄소를 줄이는 구체적인 실천이 확인되는 경우에 해당하고, 그 내용은 상세 페이지의 '지속가능 포인트'에 정리해 두었어요.",
+       en:"It marks festivals with clear eco-focused operations — where concrete waste- or carbon-reducing practices are documented. You'll find those specifics under 'Sustainability points' on the detail page."} },
+  { q:{ko:"도장은 어떻게 받나요?",
+       en:"How do I earn a stamp?"},
+    a:{ko:"축제마다 인증 방법이 달라요 — <b>위치 인증(GPS)</b>, <b>QR 코드</b>, <b>티켓 사진</b> 중 하나예요. 상세 페이지의 '인증하기' 버튼으로 진행하면 되고, 서로 다른 축제에서 <b>도장 5개</b>를 모으면 제주 지도가 완성돼 보상을 받아요.",
+       en:"Each festival uses one of three methods — <b>location (GPS)</b>, <b>QR code</b>, or a <b>ticket photo</b>. Tap 'Verify' on the detail page to check in. Collect <b>5 stamps</b> across different festivals to complete your Jeju map and unlock rewards."} },
+  { q:{ko:"점수를 조작할 수는 없나요?",
+       en:"Can the scores be gamed?"},
+    a:{ko:"평점과 체감도는 <b>방문 인증(도장)을 마친 방문자의 후기</b>를 바탕으로 하고, 로그인한 계정으로만 남길 수 있어요. 그래서 가본 적 없는 사람이 무분별하게 점수를 매기기 어려운 구조예요. 완벽하진 않지만, 실제 경험에 최대한 가깝게 유지하려는 방향이에요.",
+       en:"Ratings and sustainability scores come from <b>reviews by visitors who've completed a check-in</b>, and can only be left from a signed-in account — so it's hard for someone who never attended to spam scores. It isn't bulletproof, but the goal is to keep the numbers as close to real experience as possible."} },
+  { q:{ko:"축제 정보와 날짜는 어디서 오나요?",
+       en:"Where does the festival info and dates come from?"},
+    a:{ko:"편집팀이 정리한 제주 지속가능 축제 목록에, <b>한국관광공사 TourAPI</b>의 실시간 축제 데이터를 더해 보여줘요. 실시간으로 불러온 축제에는 <b>● LIVE</b> 표시가 붙어요. 정보가 바뀔 수 있으니 방문 전 공식 홈페이지도 함께 확인해 주세요.",
+       en:"We combine an editor-curated list of Jeju's sustainable festivals with live festival data from the <b>Korea Tourism Organization TourAPI</b>. Live-loaded festivals carry a <b>● LIVE</b> badge. Details can change, so please double-check the official homepage before you go."} },
+  { q:{ko:"홈 화면의 숫자(회원·방문 등)는 진짜인가요?",
+       en:"Are the numbers on the home page real?"},
+    a:{ko:"네, 실제 활동을 반영해요. 새로운 가입, 축제 방문 인증, 사이트 방문이 일어나면 그만큼 올라가요. 다만 서비스 초기라 <b>출범 기준의 기본 수치 위에 실제 데이터가 더해지는</b> 방식이라는 점은 솔직히 밝혀둘게요.",
+       en:"Yes — they reflect real activity, rising as people sign up, check in at festivals, and visit the site. In full honesty, since the service is young, <b>real data is added on top of a launch baseline</b> rather than starting from zero."} },
+  { q:{ko:"랭킹은 어떻게 정해지고, 언제 초기화되나요?",
+       en:"How is the ranking calculated, and when does it reset?"},
+    a:{ko:"랭킹은 <b>이번 달에 모은 도장 수</b>를 기준으로 하고, <b>매월 1일에 초기화</b>돼요. 실제 사용자가 우선 표시되고, 참여자가 적은 달에는 예시 사용자로 채워질 수 있어요.",
+       en:"Ranking is based on <b>how many stamps you collect this month</b> and <b>resets on the 1st</b>. Real users are shown first; in quiet months the board may be topped up with sample users."} },
+  { q:{ko:"개인정보와 이메일은 어떻게 쓰이나요?",
+       en:"How are my email and personal data used?"},
+    a:{ko:"이메일과 계정 정보는 로그인과 도장 기록에만 쓰여요. 문의·버그 리포트에 남긴 이메일은 답장용으로만 사용하고, 비밀번호는 <b>해시 처리해 저장</b>해 원문을 보관하지 않아요.",
+       en:"Your email and account info are used only for sign-in and stamp records. An email left on a report is used solely to reply, and passwords are <b>stored hashed</b> — we never keep the plain text."} },
+  { q:{ko:"정보가 틀렸거나 오류를 발견하면요?",
+       en:"What if information is wrong or I hit a bug?"},
+    a:{ko:"홈 화면 맨 아래 <b>문의·버그 리포트 카드</b>로 알려주세요. 내용을 확인하고 최대한 빨리 반영할게요.",
+       en:"Please tell us through the <b>report card at the bottom of the home page</b>. We'll review it and fix things as fast as we can."} },
+];
+function renderFaq(){
+  const w=document.getElementById("faqWrap"); if(!w) return;
+  w.innerHTML=FAQ.map((it,i)=>`<details class="faqitem"${i===0?" open":""}>
+      <summary><span class="faq-q">${tv(it.q)}</span><span class="faq-mk" aria-hidden="true"></span></summary>
+      <div class="faq-a">${tv(it.a)}</div>
+    </details>`).join("")
+    +`<div class="faq-more">
+      <div class="faq-more-txt"><h3>${t("faq_more")}</h3><p>${t("faq_more_sub")}</p></div>
+      <button class="btn btn-dark btn-sm" onclick="faqToReport()">${t("faq_more_btn")}</button>
+    </div>`;
+}
+function faqToReport(){ go("home"); setTimeout(()=>{ const b=document.querySelector(".bugcard"); if(b) b.scrollIntoView({behavior:"smooth",block:"center"}); },380); }
 
 /* Google Sign-In */
 async function initGoogle(){
@@ -712,6 +776,7 @@ async function openDetail(id,fromPop){
           ${meterCard("m-star","★",f.ratingAvg,t("rating"))}
           ${meterCard("m-green","♻",f.susAvg,t("sustainability"))}
         </div>
+        <button class="scorehelp" onclick="go('faq')"><span class="sh-q">?</span><span>${t("detail_how_scored")}</span></button>
         ${f.info&&Object.keys(f.info).length?`<div class="dcard">
           <div class="infohd">${svg("i-flag")}${t("event_info")}</div>
           <div class="infolist">${Object.entries(f.info).map(([k,v])=>`<div class="inforow"><span class="ik">${esc(k)}</span><span class="iv">${nl2br(v)}</span></div>`).join("")}</div>

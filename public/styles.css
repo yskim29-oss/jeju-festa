@@ -203,6 +203,43 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
 
 /* ---------- footer ---------- */
 .footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:30px 0 8px;color:var(--muted);font-size:13px}
+.footlink{font-size:13px;font-weight:700;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.footlink:hover{color:var(--ink);text-decoration-color:var(--ink)}
+
+/* ---------- FAQ screen ---------- */
+.faqwrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faqitem{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;
+  transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.faqitem[open]{border-color:#dcdbd5;box-shadow:0 10px 26px -18px rgba(40,42,32,.5)}
+.faqitem summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:16px;padding:20px 22px;
+  font-family:var(--display);font-weight:700;font-size:16.5px;color:var(--ink);letter-spacing:-.01em}
+.faqitem summary::-webkit-details-marker{display:none}
+.faq-q{flex:1 1 auto}
+.faq-mk{flex:0 0 auto;position:relative;width:20px;height:20px;border-radius:50%;background:var(--card-2);
+  border:1px solid var(--line);transition:var(--dur) var(--ease)}
+.faq-mk::before,.faq-mk::after{content:"";position:absolute;left:50%;top:50%;background:var(--ink-2);border-radius:2px}
+.faq-mk::before{width:9px;height:2px;transform:translate(-50%,-50%)}
+.faq-mk::after{width:2px;height:9px;transform:translate(-50%,-50%);transition:transform .25s var(--ease)}
+.faqitem[open] .faq-mk{background:var(--ink);border-color:var(--ink)}
+.faqitem[open] .faq-mk::before,.faqitem[open] .faq-mk::after{background:#fff}
+.faqitem[open] .faq-mk::after{transform:translate(-50%,-50%) scaleY(0)}
+.faq-a{padding:0 22px 22px;font-size:14.5px;line-height:1.72;color:var(--ink-2)}
+.faq-a b{color:var(--ink);font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .faqitem[open] .faq-a{animation:faqOpen .32s var(--ease) both}
+}
+@keyframes faqOpen{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.faq-more{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  background:linear-gradient(158deg,#20211c,#33342b);color:#fff;border-radius:var(--r-lg);padding:24px 26px}
+.faq-more-txt h3{font-family:var(--display);font-weight:700;font-size:18px;color:#fff;margin:0 0 4px}
+.faq-more-txt p{margin:0;font-size:13.5px;color:rgba(255,255,255,.7);max-width:46ch}
+.faq-more .btn-dark{background:var(--lime);color:#1b1c17}
+.faq-more .btn-dark:hover{filter:brightness(1.04)}
+@media (max-width:560px){
+  .faqitem summary{padding:17px 18px;font-size:15px;gap:12px}
+  .faq-a{padding:0 18px 18px;font-size:14px}
+  .faq-more{padding:20px}
+}
 
 /* ---------- MAP screen ---------- */
 .maplayout{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
@@ -316,6 +353,13 @@ section.view.on{display:block;animation:fade .4s var(--ease)}
 .m-star .m-bar>span{background:linear-gradient(90deg,#F7C948,var(--star))}
 .m-green .m-bar>span{background:linear-gradient(90deg,#6FC08A,var(--green))}
 .metric .lab{font-size:12px;color:var(--muted);font-weight:600}
+/* "how are these scored?" link under the detail meters */
+.scorehelp{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:9px 14px;width:100%;
+  justify-content:center;background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+  font-size:12.5px;font-weight:700;color:var(--ink-2);transition:var(--dur) var(--ease)}
+.scorehelp:hover{background:var(--card);border-color:#d9d8d2;transform:translateY(-1px)}
+.scorehelp .sh-q{width:18px;height:18px;flex:0 0 auto;border-radius:50%;background:var(--ink);color:#fff;
+  font-family:var(--display);font-weight:700;font-size:12px;display:grid;place-items:center;line-height:1}
 .susbox{background:var(--card-2);border-radius:var(--r-md);padding:18px 20px}
 .susbox ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
 .susbox li{font-size:14px;color:var(--ink-2)}
