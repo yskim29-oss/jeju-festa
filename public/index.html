@@ -313,21 +313,28 @@
 
     <!-- ===== SEARCH ===== -->
     <section id="v-search" class="view">
-      <div class="sec-head"><h2 data-t="search_title"></h2><p data-t="search_sub"></p></div>
-      <div class="searchfield">
+      <header class="srch-hero">
+        <span class="srch-ey" data-t="search_eyebrow"></span>
+        <h1 class="srch-t" data-t="search_title2"></h1>
+        <p class="srch-s" data-t="search_sub"></p>
+      </header>
+      <div class="srch-bar">
         <svg class="icon" viewBox="0 0 24 24"><use href="#i-search"/></svg>
-        <input id="searchInput" oninput="renderSearch()" onkeydown="if(event.key==='Escape')clearSearch()">
-        <button type="button" id="searchClear" class="searchclear" onclick="clearSearch()" aria-label="clear" hidden>×</button>
+        <input id="searchInput" autocomplete="off" spellcheck="false" oninput="renderSearch()" onkeydown="if(event.key==='Escape')clearSearch()">
+        <button type="button" id="searchClear" class="srch-clear" onclick="clearSearch()" aria-label="clear" hidden>✕</button>
       </div>
-      <div class="controls" style="margin-bottom:16px">
-        <div id="searchFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-right:auto"></div>
-        <div class="selectw">
+      <div class="srch-filters">
+        <div id="searchFilters" class="srch-chips"></div>
+        <div class="selectw srch-sort">
           <select id="searchSort" onchange="renderSearch()"></select>
           <svg class="icon cc" viewBox="0 0 24 24"><use href="#i-caret"/></svg>
         </div>
       </div>
-      <div class="searchcount" id="searchCount"></div>
-      <div class="pcards" id="searchList"></div>
+      <div class="srch-resulthead">
+        <span id="searchCount"></span>
+        <button type="button" id="searchReset" class="srch-reset" onclick="resetSearch()" hidden><span data-t="search_reset"></span></button>
+      </div>
+      <div class="srch-list" id="searchList"></div>
     </section>
 
     <!-- ===== MY ===== -->

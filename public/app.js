@@ -88,6 +88,9 @@ const STR = {
   map_list_head:{ko:"모든 축제",en:"All festivals"},visited:{ko:"방문",en:"Visited"},
   tip_done:{ko:"방문완료",en:"Visited"},
   search_title:{ko:"축제 검색",en:"Search festivals"},search_sub:{ko:"축제명·지역·키워드로 검색하세요",en:"Search by name, place or keyword"},
+  search_eyebrow:{ko:"축제 탐색",en:"Explore festivals"},search_title2:{ko:"어떤 축제를 찾으세요?",en:"Which festival are you after?"},
+  search_ph:{ko:"이름·지역·카테고리로 검색…",en:"Search by name, area, or category…"},search_reset:{ko:"필터 초기화",en:"Reset filters"},
+  search_none_title:{ko:"조건에 맞는 축제가 없어요",en:"No festivals match"},search_none_sub:{ko:"검색어나 필터를 바꿔서 다시 찾아보세요.",en:"Try a different keyword or filter."},
   my_title:{ko:"마이 페이지",en:"My page"},my_rewards:{ko:"리워드 현황",en:"Rewards"},my_goal:{ko:"목표",en:"Goal"},logout:{ko:"로그아웃",en:"Log out"},
   my_stamps:{ko:"내가 모은 도장",en:"My stamps"},
   passport_label:{ko:"제주 축제 여권",en:"Jeju Festa Passport"},
@@ -321,7 +324,7 @@ function applyStatic(){
   });
   document.querySelectorAll("[data-tph]").forEach(el=>el.placeholder=t(el.getAttribute("data-tph")));
   const h1=document.getElementById("heroH1"); if(h1) h1.innerHTML=nl2br(t("hero_h1"));
-  const si=document.getElementById("searchInput"); if(si) si.placeholder=t("search_title");
+  const si=document.getElementById("searchInput"); if(si) si.placeholder=t("search_ph");
   buildSortSelects();
   if(document.getElementById("app").classList.contains("hidden")) setAuthMode(authMode);
 }
@@ -827,21 +830,45 @@ function renderSlots(elId,dark){
 }
 
 /* ================= SEARCH ================= */
+/* rich horizontal result card: thumbnail + name + location + date + rating */
+function scard(f){
+  const got=has(f.id);
+  return `<button class="scard" onclick="openDetail(${f.id})" style="--c:${CATCOLOR[f.cat]||'#2F9E62'}">
+    <div class="sc-thumb"><img src="${festImg(f)}" alt="" onerror="this.style.display='none'">
+      ${got?`<span class="sc-got">${f.stamp||"✓"}</span>`:""}</div>
+    <div class="sc-body">
+      <div class="sc-tags"><span class="tagpill ${f.cat}">${t(f.cat)}</span>${f.green?`<span class="tagpill lime">♻ ${t("green_badge")}</span>`:""}${liveBadge(f)}</div>
+      <h4 class="sc-name">${esc(tv(f.name))}</h4>
+      <div class="sc-meta">
+        <span>${svg("i-pin","icon sm")}${esc(tv(f.loc))}</span>
+        <span>${svg("i-clock","icon sm")}${fmtRange(f)}</span>
+      </div>
+    </div>
+    <div class="sc-side">
+      <span class="sc-rate">★ ${(f.ratingAvg||0).toFixed(1)}</span>
+      <span class="sc-arrow">${svg(got?"i-check":"i-arrow-ur","icon sm")}</span>
+    </div>
+  </button>`;
+}
 function renderSearch(){
   buildFilters("searchFilters",renderSearch);
   sortMode=document.getElementById("searchSort").value||sortMode;
   const q=(document.getElementById("searchInput").value||"").toLowerCase().trim();
   const clr=document.getElementById("searchClear"); if(clr) clr.hidden=!q;
+  const active=(q||catFilter!=="all"||greenOnly);
+  const rst=document.getElementById("searchReset"); if(rst) rst.hidden=!active;
   let list=FEST.slice();
   if(catFilter!=="all") list=list.filter(f=>f.cat===catFilter);
   if(greenOnly) list=list.filter(f=>f.green);
   if(q) list=list.filter(f=>[tv(f.name),tv(f.loc),f.name.ko,f.name.en,f.loc.ko,f.loc.en,t(f.cat),tv(f.desc)].join(" ").toLowerCase().includes(q));
   list=sortList(list);
   const cnt=document.getElementById("searchCount");
-  if(cnt) cnt.textContent=(q||catFilter!=="all"||greenOnly)?tv({ko:`${list.length}개의 축제`,en:`${list.length} festival${list.length===1?"":"s"}`}):"";
-  document.getElementById("searchList").innerHTML=list.length?list.map(pcard).join(""):`<div class="empty" style="grid-column:1/-1">${t("no_result")}</div>`;
+  if(cnt) cnt.textContent=tv({ko:`${list.length}개의 축제`,en:`${list.length} festival${list.length===1?"":"s"}`});
+  document.getElementById("searchList").innerHTML=list.length?list.map(scard).join("")
+    :`<div class="srch-empty"><div class="srch-empty-ic">🔍</div><h3>${t("search_none_title")}</h3><p>${t("search_none_sub")}</p><button class="btn btn-ghost btn-sm" onclick="resetSearch()">${t("search_reset")}</button></div>`;
 }
 function clearSearch(){ const i=document.getElementById("searchInput"); if(i){ i.value=""; i.focus(); } renderSearch(); }
+function resetSearch(){ catFilter="all"; greenOnly=false; const i=document.getElementById("searchInput"); if(i) i.value=""; renderSearch(); }
 
 /* ================= DETAIL ================= */
 /* score meter card — shows value out of a fixed max (5) with a proportional fill */
