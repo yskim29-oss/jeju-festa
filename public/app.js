@@ -22,7 +22,8 @@ const STR = {
   or:{ko:"또는",en:"or"},
 
   nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},
-  faq_title:{ko:"자주 묻는 질문",en:"Frequently asked questions"},
+  faq_eyebrow:{ko:"도움말 센터",en:"Help center"},
+  faq_title:{ko:"무엇이 궁금하세요?",en:"How can we help?"},
   faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
   faq_footer:{ko:"자주 묻는 질문",en:"FAQ"},
   faq_more:{ko:"더 궁금한 점이 있나요?",en:"Still have a question?"},
@@ -404,13 +405,40 @@ const FAQ=[
     a:{ko:"홈 화면 맨 아래 <b>문의·버그 리포트 카드</b>로 알려주세요. 내용을 확인하고 최대한 빨리 반영할게요.",
        en:"Please tell us through the <b>report card at the bottom of the home page</b>. We'll review it and fix things as fast as we can."} },
 ];
+/* category per FAQ item (index-aligned with FAQ) + chip labels */
+const FAQ_CAT=["score","score","score","stamp","score","data","data","stamp","data","data"];
+const FAQ_CATS=[
+  {k:"all",  ko:"전체",         en:"All"},
+  {k:"score",ko:"점수·신뢰",     en:"Scores & trust"},
+  {k:"stamp",ko:"도장·참여",     en:"Stamps & play"},
+  {k:"data", ko:"데이터·개인정보",en:"Data & privacy"},
+];
+let faqCat="all";
+function setFaqCat(k){ faqCat=k; renderFaq(); }
 function renderFaq(){
   const w=document.getElementById("faqWrap"); if(!w) return;
-  w.innerHTML=FAQ.map((it,i)=>`<details class="faqitem"${i===0?" open":""}>
-      <summary><span class="faq-q">${tv(it.q)}</span><span class="faq-mk" aria-hidden="true"></span></summary>
-      <div class="faq-a">${tv(it.a)}</div>
-    </details>`).join("")
-    +`<div class="faq-more">
+  const chips=FAQ_CATS.map(c=>{
+    const n=c.k==="all"?FAQ.length:FAQ_CAT.filter(x=>x===c.k).length;
+    return `<button class="faqchip${faqCat===c.k?' on':''}" onclick="setFaqCat('${c.k}')">${tv(c)}<span>${n}</span></button>`;
+  }).join("");
+  const list=FAQ.map((it,idx)=>({it,idx})).filter(o=>faqCat==="all"||FAQ_CAT[o.idx]===faqCat);
+  const items=list.map((o,i)=>`<details class="faqitem"${i===0?" open":""}>
+      <summary>
+        <span class="faq-n">${String(i+1).padStart(2,"0")}</span>
+        <span class="faq-q">${tv(o.it.q)}</span>
+        <span class="faq-mk" aria-hidden="true"></span>
+      </summary>
+      <div class="faq-a">${tv(o.it.a)}</div>
+    </details>`).join("");
+  w.innerHTML=`
+    <header class="faqhero">
+      <span class="faqhero-ey">${t("faq_eyebrow")}</span>
+      <h1 class="faqhero-t">${t("faq_title")}</h1>
+      <p class="faqhero-s">${t("faq_sub")}</p>
+    </header>
+    <div class="faqchips">${chips}</div>
+    <div class="faqlist">${items}</div>
+    <div class="faq-more">
       <div class="faq-more-txt"><h3>${t("faq_more")}</h3><p>${t("faq_more_sub")}</p></div>
       <button class="btn btn-dark btn-sm" onclick="faqToReport()">${t("faq_more_btn")}</button>
     </div>`;
