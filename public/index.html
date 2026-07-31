@@ -152,7 +152,6 @@
         <div class="logo"><span class="mk"><svg viewBox="0 0 40 40"><use href="#logo-mark"/></svg></span><span class="wordmark">Jeju Festa</span></div>
         <div class="navlinks" id="navlinks">
           <button data-nav="home" data-t="nav_home"></button>
-          <button data-nav="about" data-t="nav_about"></button>
           <button data-nav="map" data-t="nav_map"></button>
           <button data-nav="search" data-t="nav_search"></button>
           <button data-nav="my" data-t="nav_my"></button>
@@ -169,7 +168,6 @@
           <button class="iconbtn plain menubtn" onclick="toggleNavMenu(event)"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
           <div class="navdrop" id="navDrop">
             <button data-nav="home" onclick="navPick('home')" data-t="nav_home"></button>
-            <button data-nav="about" onclick="navPick('about')" data-t="nav_about"></button>
             <button data-nav="map" onclick="navPick('map')" data-t="nav_map"></button>
             <button data-nav="search" onclick="navPick('search')" data-t="nav_search"></button>
             <button data-nav="my" onclick="navPick('my')" data-t="nav_my"></button>
@@ -346,11 +344,6 @@
     </section>
 
     <!-- ===== FAQ ===== -->
-    <!-- ===== ABOUT ===== -->
-    <section id="v-about" class="view">
-      <div class="aboutpage" id="aboutWrap"></div>
-    </section>
-
     <!-- ===== FAQ ===== -->
     <section id="v-faq" class="view">
       <div class="faqpage" id="faqWrap"></div>
@@ -365,7 +358,8 @@
 </div>
 
 <!-- check-in sheet -->
-<div class="sheet" id="checkinSheet"><div class="sheet-card" id="sheetCard"></div></div>
+<div class="sheet" id="checkinSheet" onclick="if(event.target===this)closeCheckin()"><div class="sheet-card" id="sheetCard"></div></div>
+<div class="sheet" id="profileSheet" onclick="if(event.target===this)closeProfile()"><div class="sheet-card" id="profileCard"></div></div>
 <!-- calendar day sheet -->
 <div class="sheet" id="calDaySheet" onclick="if(event.target===this)closeCalDay()"><div class="sheet-card" id="calDayCard"></div></div>
 <!-- toast + stamp modal -->

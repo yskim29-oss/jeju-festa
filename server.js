@@ -613,6 +613,23 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     return send(res, 200, { user: publicUser(u) });
   }
 
+  /* ---- update own profile (name / avatar) ---- */
+  if (url === "/api/me" && (req.method === "PUT" || req.method === "POST")) {
+    const u = sessionUser(req);
+    if (!u) return send(res, 401, { error: "unauthorized" });
+    if (typeof body.name === "string") {
+      const name = body.name.trim().slice(0, 24);
+      if (name.length < 1) return send(res, 422, { error: "invalid", reason: "bad_name" });
+      u.name = name;
+    }
+    if (typeof body.avatar === "string" && body.avatar.trim()) {
+      // keep it short (a single emoji/character); guards against oversized payloads
+      u.avatar = Array.from(body.avatar.trim()).slice(0, 4).join("");
+    }
+    saveDB();
+    return send(res, 200, { user: publicUser(u) });
+  }
+
   /* ---- bug report ---- */
   if (url === "/api/report" && req.method === "POST") {
     const message = (body.message || "").trim();
@@ -681,7 +698,10 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     // validate proof by method
     let proof = { method };
     if (method === "qr") {
-      if ((body.code || "").trim().toUpperCase() !== qrFor(fid))
+      // tolerant match: ignore case/spaces/dashes, accept "JEJU-<id>", "JEJU<id>", or the bare id
+      const norm = String(body.code || "").toUpperCase().replace(/[\s-]+/g, "");
+      const ok = norm === "JEJU" + fid || norm === String(fid);
+      if (!ok)
         return send(res, 422, { error: "checkin_failed", reason: "bad_qr" });
     } else if (method === "ticket") {
       if (!body.hasPhoto)
