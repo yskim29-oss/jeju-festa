@@ -414,10 +414,19 @@ function renderHomeStats(){
         <div class="hst-foot">${t("home_stats_live")}</div>
       </div>
     </div>`;
-    countUp(el.querySelector('[data-cu="u"]'),d.travelers,{dur:1400});
-    countUp(el.querySelector('[data-cu="s"]'),d.signups,{dur:1200});
-    countUp(el.querySelector('[data-cu="v"]'),d.stamps,{dur:1300});
-    countUp(el.querySelector('[data-cu="w"]'),d.views,{dur:1500});
+    const runCount=()=>{
+      countUp(el.querySelector('[data-cu="u"]'),d.travelers,{dur:1400});
+      countUp(el.querySelector('[data-cu="s"]'),d.signups,{dur:1200});
+      countUp(el.querySelector('[data-cu="v"]'),d.stamps,{dur:1300});
+      countUp(el.querySelector('[data-cu="w"]'),d.views,{dur:1500});
+    };
+    // count up only when the ticket scrolls into view (not on render, so it isn't missed below the fold)
+    const card=el.querySelector(".hst");
+    if(document.hidden || !("IntersectionObserver" in window) || !card){ runCount(); return; }
+    let done=false; const go=()=>{ if(done)return; done=true; runCount(); };
+    const io=new IntersectionObserver((ents)=>{ ents.forEach(en=>{ if(en.isIntersecting){ go(); io.disconnect(); } }); },{threshold:0.25});
+    io.observe(card);
+    setTimeout(go,4000); // safety: never leave the numbers stuck at 0
   }).catch(()=>{ el.innerHTML=""; el.dataset.loaded=""; });
 }
 /* home entrance + scroll-reveal animations.
@@ -427,14 +436,33 @@ function animateHomeIn(){
   const home=document.getElementById("v-home"); if(!home) return;
   if(!home.dataset.entered){ home.dataset.entered="1"; const hero=home.querySelector(".hero"); if(hero) hero.classList.add("enter"); }
   // fade+rise blocks
-  home.querySelectorAll(".protect .pblock, .controls, #calWrap, .inits, #pcards, .bugcard").forEach(el=>el.classList.add("reveal"));
+  home.querySelectorAll(".protect .pblock, .controls, #calWrap, .inits, .bugcard").forEach(el=>el.classList.add("reveal"));
   // clip-path mask-reveal on the big headings (printed-in, not faded)
   home.querySelectorAll(".sec-head h2, .greener h2").forEach(el=>el.classList.add("maskrev"));
+  // stamp "thunk" on the problem cards — scale down + settle, like a rubber stamp pressing on paper
+  home.querySelectorAll("#pcards .pcard").forEach((el,i)=>{ el.classList.add("stamprev"); el.style.animationDelay=(i*70)+"ms"; });
+  heroParallax(home);
   revealObserve();
 }
+/* gentle hero parallax: the photo drifts slower than the page for subtle depth (skipped for reduced-motion) */
+function heroParallax(home){
+  if(window._heroPx) return;
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  const img=home.querySelector(".hero-photo>img"); if(!img) return;
+  window._heroPx=true;
+  let ticking=false;
+  const upd=()=>{ ticking=false;
+    const r=img.parentElement.getBoundingClientRect();
+    const off=Math.max(-22,Math.min(22,(window.innerHeight/2-(r.top+r.height/2))*0.06));
+    img.style.transform="translateY("+off.toFixed(1)+"px) scale(1.14)";
+  };
+  addEventListener("scroll",()=>{ if(!ticking){ ticking=true; requestAnimationFrame(upd); } },{passive:true});
+  addEventListener("resize",upd,{passive:true});
+  upd();
+}
 function revealObserve(){
-  const sel="#v-home .reveal:not(.in), #v-home .maskrev:not(.in)";
-  const revealAll=()=>document.querySelectorAll("#v-home .reveal, #v-home .maskrev").forEach(e=>e.classList.add("in"));
+  const sel="#v-home .reveal:not(.in), #v-home .maskrev:not(.in), #v-home .stamprev:not(.in)";
+  const revealAll=()=>document.querySelectorAll("#v-home .reveal, #v-home .maskrev, #v-home .stamprev").forEach(e=>e.classList.add("in"));
   if(!("IntersectionObserver" in window)){ revealAll(); return; }
   if(!window._revObs){
     window._revObs=new IntersectionObserver((ents,obs)=>{

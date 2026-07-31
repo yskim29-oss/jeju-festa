@@ -849,7 +849,11 @@ body.introlock{overflow:hidden}
   /* mask reveal: element stays fully opaque, a clip-path wipe uncovers it left->right */
   #v-home .maskrev{clip-path:inset(0 100% 0 0)}
   #v-home .maskrev.in{clip-path:inset(0 0 0 0);transition:clip-path .85s cubic-bezier(.22,1,.36,1)}
+  /* stamp press: card starts slightly big + tilted, then thunks down flush like a rubber stamp */
+  #v-home .stamprev{opacity:0}
+  #v-home .stamprev.in{animation:stampPress .5s cubic-bezier(.34,1.56,.64,1) both}
 }
+@keyframes stampPress{0%{opacity:0;transform:scale(1.06) rotate(-1.3deg)}55%{opacity:1}100%{opacity:1;transform:scale(1) rotate(0)}}
 /* hero entrance (runs once when home first shows) */
 .hero.enter .hero-lime .eyebrow{animation:heroRise .6s var(--ease) both}
 .hero.enter .hero-lime h1{animation:heroRise .6s .09s var(--ease) both}
