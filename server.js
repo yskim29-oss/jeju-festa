@@ -514,7 +514,9 @@ function rewardMet(u, r) {
 
 /* ---------------- http ---------------- */
 const MIME = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
-  ".json":"application/json", ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon" };
+  ".json":"application/json", ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon",
+  ".jpg":"image/jpeg", ".jpeg":"image/jpeg", ".webp":"image/webp",
+  ".txt":"text/plain; charset=utf-8", ".xml":"application/xml; charset=utf-8", ".webmanifest":"application/manifest+json" };
 
 function send(res, code, data, headers = {}) {
   const body = typeof data === "string" ? data : JSON.stringify(data);

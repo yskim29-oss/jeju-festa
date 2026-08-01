@@ -147,6 +147,8 @@ const STR = {
   rw_stat_ready:{ko:"교환 가능",en:"Ready to claim"},
   rw_redeem_h:{ko:"교환소",en:"Redemption"},
   rw_redeem_sub:{ko:"조건을 채우면 받을 수 있어요",en:"Claim once you meet the requirement"},
+  rw_redeem_note:{ko:"교환 코드를 받은 뒤, 도장 인증 화면 등 증빙과 함께 {email} 으로 보내주시면 실제 혜택을 안내해 드려요.",en:"After you claim a code, email it to {email} with proof (e.g. a screenshot of your stamps) and we'll arrange the real perk."},
+  rw_email_btn:{ko:"이메일로 교환",en:"Redeem by email"},
   rw_ach_h:{ko:"업적",en:"Achievements"},
   rw_ach_sub:{ko:"여정을 기록하는 배지",en:"Badges that record your journey"},
   rw_ach_count:{ko:"{a} / {b} 달성",en:"{a} / {b} earned"},
@@ -1314,6 +1316,13 @@ function renderMy(){
 }
 
 /* ================= REWARDS + ACHIEVEMENTS ================= */
+const REDEEM_EMAIL="yunseongkim@jejufesta.online";
+function redeemMailto(rewardId,code){
+  const title=t("rwd_"+rewardId+"_t");
+  const subj=`[제주 페스타 / Jeju Festa] ${t("rw_email_btn")} · ${title}`;
+  const body=`${title}\n${t("rw_code")}: ${code}\n\n(증빙 첨부 / attach proof)\n`;
+  return `mailto:${REDEEM_EMAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
 /* achievements: derived purely from stamps + festival metadata (no server needed).
    prog(st) → {cur,max} drives the progress bar + earned state. */
 const ACH=[
@@ -1367,7 +1376,8 @@ function renderRewards(){
     const met=rewardMetC(r), done=!!c[r.id], p=rewardProgC(r);
     const state=done?"claimed":met?"ready":"locked";
     let action;
-    if(done) action=`<div class="rwd-code"><span class="rwd-code-lbl">${t("rw_code")}</span><code>${esc(c[r.id].code)}</code><button class="rwd-copy" onclick="copyCode('${esc(c[r.id].code)}',this)">${t("rw_copy")}</button></div>`;
+    if(done) action=`<div class="rwd-code"><span class="rwd-code-lbl">${t("rw_code")}</span><code>${esc(c[r.id].code)}</code><button class="rwd-copy" onclick="copyCode('${esc(c[r.id].code)}',this)">${t("rw_copy")}</button></div>
+      <a class="rwd-email" href="${redeemMailto(r.id,c[r.id].code)}">${svg("i-arrow-ur","icon sm")}${t("rw_email_btn")}</a>`;
     else if(met) action=`<button class="rwd-claim" onclick="claimReward('${r.id}',this)">${svg("i-gift","icon sm")}${t("rw_claim")}</button>`;
     else action=`<div class="rwd-prog"><div class="rwd-bar"><i style="width:${Math.round(p.cur/p.max*100)}%"></i></div><span class="rwd-need">${reqLabelC(r)} · ${p.cur}/${p.max}</span></div>`;
     return `<div class="rwd-card ${state}">
@@ -1405,6 +1415,7 @@ function renderRewards(){
     </section>
 
     <div class="rw-sec-head"><div><h3>${svg("i-gift","icon sm")}${t("rw_redeem_h")}</h3><p>${t("rw_redeem_sub")}</p></div></div>
+    <div class="rw-note">${svg("i-leaf","icon sm")}<span>${t("rw_redeem_note").replace("{email}",`<a href="mailto:${REDEEM_EMAIL}">${REDEEM_EMAIL}</a>`)}</span></div>
     <div class="rwd-grid">${redeem}</div>
 
     <div class="rw-sec-head"><div><h3>${svg("i-medal","icon sm")}${t("rw_ach_h")}</h3><p>${t("rw_ach_sub")}</p></div><span class="rw-sec-count">${t("rw_ach_count").replace("{a}",achDone).replace("{b}",ACH.length)}</span></div>

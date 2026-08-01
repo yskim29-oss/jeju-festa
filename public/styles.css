@@ -1460,8 +1460,18 @@ body.introlock{overflow:hidden}
 .rw-sec-count{flex:0 0 auto;font-size:12.5px;font-weight:800;color:var(--lime-ink);background:var(--lime);
   padding:7px 13px;border-radius:999px}
 
+/* email-redemption note */
+.rw-note{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:13px 16px;border-radius:var(--r-md);
+  background:#eef8f1;border:1px solid #cbe8d6;color:#25603f;font-size:13.5px;line-height:1.55;font-weight:600}
+.rw-note .icon{flex:0 0 auto;width:16px;height:16px;margin-top:2px;color:var(--green)}
+.rw-note a{color:var(--green);font-weight:800;text-decoration:underline;text-underline-offset:2px;word-break:break-all}
+
 /* redeem cards */
 .rwd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.rwd-email{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:9px;padding:9px 14px;
+  border-radius:11px;background:var(--green);color:#fff;font-weight:700;font-size:13px;transition:var(--dur) var(--ease)}
+.rwd-email .icon{width:13px;height:13px}
+.rwd-email:hover{filter:brightness(1.07);transform:translateY(-1px)}
 .rwd-card{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-md);padding:18px 18px 16px;transition:var(--dur) var(--ease)}
 .rwd-card.locked{background:var(--card-2);opacity:.92}
