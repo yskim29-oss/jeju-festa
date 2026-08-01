@@ -21,7 +21,7 @@ const STR = {
   err_google_failed:{ko:"구글 로그인에 실패했어요.",en:"Google sign-in failed."},
   or:{ko:"또는",en:"or"},
 
-  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},
+  nav_home:{ko:"홈",en:"Home"},nav_map:{ko:"지도",en:"Map"},nav_search:{ko:"검색",en:"Search"},nav_my:{ko:"마이",en:"My"},nav_rewards:{ko:"리워드",en:"Rewards"},nav_rank:{ko:"랭킹",en:"Ranking"},nav_faq:{ko:"FAQ",en:"FAQ"},
   faq_eyebrow:{ko:"도움말 센터",en:"Help center"},
   faq_title:{ko:"무엇이 궁금하세요?",en:"How can we help?"},
   faq_sub:{ko:"점수는 어떻게 매겨질까요? 가장 많이 받는 질문을 모았어요.",en:"How are the scores decided? Here's what people ask us most."},
@@ -137,6 +137,54 @@ const STR = {
   r5_t:{ko:"제주 굿즈 세트",en:"Jeju goods set"},r5_d:{ko:"지도 완성 · 감귤 에코백 + 스티커",en:"Map complete · tote + stickers"},
   locked:{ko:"잠김",en:"Locked"},unlocked:{ko:"획득!",en:"Unlocked!"},reward_toast:{ko:"리워드 잠금 해제!",en:"Reward unlocked!"},
   me:{ko:"나",en:"Me"},no_result:{ko:"검색 결과가 없어요.",en:"No results found."},no_fest:{ko:"이 달에는 등록된 축제가 없어요.",en:"No festivals this month."},
+
+  /* ---- rewards + achievements page ---- */
+  rw_eyebrow:{ko:"리워드 · 업적",en:"Rewards · Achievements"},
+  rw_title:{ko:"모은 도장이\n혜택이 됩니다",en:"Turn your stamps\ninto rewards"},
+  rw_sub:{ko:"축제를 인증할수록 실제 혜택을 교환하고, 여정의 발자취를 배지로 모아보세요.",en:"The more festivals you check in to, the more perks you redeem — and the more badges you collect along the way."},
+  rw_stat_stamps:{ko:"모은 도장",en:"Stamps"},
+  rw_stat_ach:{ko:"달성 업적",en:"Achievements"},
+  rw_stat_ready:{ko:"교환 가능",en:"Ready to claim"},
+  rw_redeem_h:{ko:"교환소",en:"Redemption"},
+  rw_redeem_sub:{ko:"조건을 채우면 받을 수 있어요",en:"Claim once you meet the requirement"},
+  rw_ach_h:{ko:"업적",en:"Achievements"},
+  rw_ach_sub:{ko:"여정을 기록하는 배지",en:"Badges that record your journey"},
+  rw_ach_count:{ko:"{a} / {b} 달성",en:"{a} / {b} earned"},
+  rw_claim:{ko:"받기",en:"Claim"},
+  rw_claiming:{ko:"처리 중…",en:"Claiming…"},
+  rw_claimed:{ko:"교환 완료",en:"Claimed"},
+  rw_code:{ko:"교환 코드",en:"Your code"},
+  rw_copy:{ko:"복사",en:"Copy"},
+  rw_copied:{ko:"복사됨!",en:"Copied!"},
+  rw_locked_hint:{ko:"조건 미달",en:"Not yet"},
+  rw_claim_toast:{ko:"리워드를 교환했어요! 🎁",en:"Reward claimed! 🎁"},
+  rw_earned:{ko:"달성!",en:"Earned!"},
+  rw_ach_empty_hint:{ko:"축제를 인증하고 배지를 모아보세요",en:"Check in to festivals to earn badges"},
+  req_stamps:{ko:"도장 {n}개",en:"{n} stamps"},
+  req_green:{ko:"친환경 축제 {n}곳",en:"{n} green festivals"},
+  req_cat:{ko:"{c} {n}곳",en:"{n} {c} festivals"},
+  /* reward definitions */
+  rwd_seedling_t:{ko:"‘새싹’ 디지털 배지",en:"“Seedling” digital badge"},
+  rwd_seedling_d:{ko:"첫 인증을 기념하는 디지털 배지",en:"A digital badge for your first check-in"},
+  rwd_cafe_t:{ko:"제로웨이스트 음료 쿠폰",en:"Zero-waste drink coupon"},
+  rwd_cafe_d:{ko:"다회용컵 지참 시 축제 부스 음료 10% 할인",en:"10% off festival-booth drinks with a reusable cup"},
+  rwd_draw_t:{ko:"친환경 굿즈 추첨권",en:"Eco-goods raffle entry"},
+  rwd_draw_d:{ko:"감귤 에코백·스티커 세트 추첨 응모권",en:"Entry into the tangerine tote & sticker draw"},
+  rwd_ecobadge_t:{ko:"친환경 후원자 배지",en:"Eco-supporter badge"},
+  rwd_ecobadge_d:{ko:"친환경 축제를 응원한 후원자 인증 배지",en:"A badge recognizing you as a green-festival supporter"},
+  rwd_priority_t:{ko:"축제 우선예약권",en:"Priority booking pass"},
+  rwd_priority_d:{ko:"다음 시즌 인기 축제 우선 예약 기회",en:"Priority booking for next season's popular festivals"},
+  rwd_tree_t:{ko:"나무 심기 기부 인증서",en:"Tree-planting certificate"},
+  rwd_tree_d:{ko:"내 이름으로 제주에 나무 한 그루를 심어요",en:"A tree planted in Jeju in your name"},
+  /* achievement definitions */
+  ach_first_t:{ko:"첫 도장",en:"First Stamp"},ach_first_d:{ko:"첫 축제에 인증했어요",en:"Checked in to your first festival"},
+  ach_trio_t:{ko:"삼세번",en:"On a Roll"},ach_trio_d:{ko:"축제 3곳을 인증했어요",en:"Checked in to 3 festivals"},
+  ach_master_t:{ko:"도장 마스터",en:"Stamp Master"},ach_master_d:{ko:"축제 5곳을 인증했어요",en:"Checked in to 5 festivals"},
+  ach_eco_t:{ko:"친환경 지킴이",en:"Eco Guardian"},ach_eco_d:{ko:"친환경 축제 3곳을 인증했어요",en:"Checked in to 3 green festivals"},
+  ach_trad_t:{ko:"전통 계승자",en:"Heritage Keeper"},ach_trad_d:{ko:"전통 축제 2곳을 인증했어요",en:"Checked in to 2 tradition festivals"},
+  ach_taste_t:{ko:"로컬 미식가",en:"Local Foodie"},ach_taste_d:{ko:"농·수산 축제 2곳을 인증했어요",en:"Checked in to 2 farm & sea festivals"},
+  ach_explorer_t:{ko:"만능 탐험가",en:"All-Rounder"},ach_explorer_d:{ko:"3개 분야 이상 인증했어요",en:"Checked in across 3+ categories"},
+  ach_allgreen_t:{ko:"완전 친환경",en:"Fully Green"},ach_allgreen_d:{ko:"친환경 축제 5곳을 인증했어요",en:"Checked in to 5 green festivals"},
 
   /* ---- check-in methods ---- */
   method_geo:{ko:"위치 인증",en:"Location"},method_qr:{ko:"QR 인증",en:"QR scan"},method_ticket:{ko:"티켓 인증",en:"Ticket"},
@@ -344,7 +392,7 @@ function setLang(l){
 }
 
 /* ================= nav ================= */
-const NAV=["home","map","search","my","rank","faq"];
+const NAV=["home","map","search","my","rewards","rank","faq"];
 function go(view,fromPop){
   document.querySelectorAll("section.view").forEach(s=>s.classList.remove("on"));
   document.getElementById("v-"+view).classList.add("on");
@@ -354,6 +402,7 @@ function go(view,fromPop){
   if(view==="map") renderMap();
   if(view==="search") renderSearch();
   if(view==="my") renderMy();
+  if(view==="rewards") renderRewards();
   if(view==="rank") renderRank(); else stopRankCountdown();
   if(view==="faq") renderFaq();
   route({view},fromPop);
@@ -1208,7 +1257,7 @@ function renderMy(){
   const memberNo=String(ME.id||"000000").replace(/[^a-z0-9]/gi,"").slice(0,6).toUpperCase().padEnd(6,"0");
   const nextAt = n>=5?null : n>=3?5 : n>=1?3 : 1;
   const nextTxt = nextAt ? t("pp_next").replace("{n}", nextAt-n) : t("pp_complete");
-  const rewards=[{k:1,icon:"🏅",tt:"r1_t",dd:"r1_d"},{k:3,icon:"🎟️",tt:"r3_t",dd:"r3_d"},{k:5,icon:"🎁",tt:"r5_t",dd:"r5_d"}];
+  const achDone=achEarnedCount(), achTot=ACH.length, rReady=rewardsReadyCount();
   document.getElementById("myBody").innerHTML=`
     <section class="pp">
       <div class="pp-guilloche" aria-hidden="true"></div>
@@ -1243,16 +1292,15 @@ function renderMy(){
     <div class="my-sec-head"><h3>${t("my_stamps")}</h3><span>${n}/5</span></div>
     <div class="sbook" id="sbook"></div>
 
-    <div class="my-sec-head"><h3>${t("my_rewards")}</h3></div>
-    <div class="rewards2">${rewards.map(r=>{
-      const ok=n>=r.k, cur=Math.min(n,r.k), w=Math.round(cur/r.k*100);
-      return `<div class="rcard ${ok?'on':''}">
-        <div class="ric">${r.icon}</div>
-        <div class="rtt">${t(r.tt)}</div>
-        <div class="rdd">${t(r.dd)}</div>
-        <div class="rbar"><i style="width:${w}%"></i></div>
-        <div class="rstat2">${ok?svg("i-check","icon sm")+t("unlocked"):cur+" / "+r.k}</div>
-      </div>`; }).join("")}</div>
+    <button class="rw-teaser" onclick="go('rewards')">
+      <div class="rw-teaser-ic">🎁</div>
+      <div class="rw-teaser-main">
+        <div class="rw-teaser-h">${t("rw_eyebrow")}</div>
+        <div class="rw-teaser-sub">${t("rw_ach_count").replace("{a}",achDone).replace("{b}",achTot)}${rReady?` · ${t("rw_stat_ready")} ${rReady}`:""}</div>
+      </div>
+      ${rReady?`<span class="rw-teaser-dot">${rReady}</span>`:""}
+      ${svg("i-arrow","icon")}
+    </button>
     <button class="logoutbtn" onclick="logout()">${svg("i-logout","icon sm")} ${t("logout")}</button>`;
   renderMyStampBook();
   // async: fetch my monthly rank into the stat tile
@@ -1263,6 +1311,121 @@ function renderMy(){
     const idx=board.findIndex(b=>b.userId===ME.id);
     const el=document.getElementById("myRankVal"); if(el&&idx>=0) el.textContent="#"+(idx+1);
   }).catch(()=>{});
+}
+
+/* ================= REWARDS + ACHIEVEMENTS ================= */
+/* achievements: derived purely from stamps + festival metadata (no server needed).
+   prog(st) → {cur,max} drives the progress bar + earned state. */
+const ACH=[
+  {id:"first",   icon:"🎫", prog:st=>({cur:Math.min(st.n,1),max:1})},
+  {id:"trio",    icon:"🔥", prog:st=>({cur:Math.min(st.n,3),max:3})},
+  {id:"master",  icon:"🏆", prog:st=>({cur:Math.min(st.n,5),max:5})},
+  {id:"eco",     icon:"🌱", prog:st=>({cur:Math.min(st.green,3),max:3})},
+  {id:"trad",    icon:"🎭", prog:st=>({cur:Math.min(st.cat.tradition||0,2),max:2})},
+  {id:"taste",   icon:"🐟", prog:st=>({cur:Math.min(st.cat.agri||0,2),max:2})},
+  {id:"explorer",icon:"🗺️", prog:st=>({cur:Math.min(st.cats,3),max:3})},
+  {id:"allgreen",icon:"💚", prog:st=>({cur:Math.min(st.green,5),max:5})},
+];
+/* rewards: claimable perks. `req` primitives mirror the server's validator exactly. */
+const REWARDS_C=[
+  {id:"seedling", icon:"🌱", req:{stamps:1}},
+  {id:"cafe",     icon:"☕", req:{stamps:3}},
+  {id:"draw",     icon:"🎁", req:{stamps:5}},
+  {id:"ecobadge", icon:"🌿", req:{green:3}},
+  {id:"priority", icon:"🎟️", req:{stamps:5}},
+  {id:"tree",     icon:"🌍", req:{green:5}},
+];
+/* rollup of the current user's stamp profile */
+function stampStats(){
+  const ids=stamps(), cat={}; let green=0;
+  ids.forEach(id=>{ const f=FEST.find(x=>x.id===id); if(!f) return; cat[f.cat]=(cat[f.cat]||0)+1; if(f.green) green++; });
+  return { n:ids.length, green, cat, cats:Object.keys(cat).length };
+}
+function achEarnedCount(){ const s=stampStats(); return ACH.filter(a=>{const p=a.prog(s);return p.cur>=p.max;}).length; }
+function rewardMetC(r){ const s=stampStats(); const q=r.req;
+  if(q.stamps&&s.n<q.stamps) return false;
+  if(q.green&&s.green<q.green) return false;
+  if(q.cat&&(s.cat[q.cat]||0)<q.n) return false;
+  return true; }
+function rewardProgC(r){ const s=stampStats(), q=r.req;
+  if(q.green) return {cur:Math.min(s.green,q.green),max:q.green};
+  if(q.cat)   return {cur:Math.min(s.cat[q.cat]||0,q.n),max:q.n};
+  return {cur:Math.min(s.n,q.stamps||1),max:q.stamps||1}; }
+function reqLabelC(r){ const q=r.req;
+  if(q.green) return t("req_green").replace("{n}",q.green);
+  if(q.cat)   return t("req_cat").replace("{n}",q.n).replace("{c}",t(q.cat));
+  return t("req_stamps").replace("{n}",q.stamps); }
+function claims(){ return (ME&&ME.claims)||{}; }
+function rewardsReadyCount(){ const c=claims(); return REWARDS_C.filter(r=>rewardMetC(r)&&!c[r.id]).length; }
+
+function renderRewards(){
+  const s=stampStats();
+  const achDone=achEarnedCount(), ready=rewardsReadyCount();
+  const c=claims();
+
+  const redeem=REWARDS_C.map(r=>{
+    const met=rewardMetC(r), done=!!c[r.id], p=rewardProgC(r);
+    const state=done?"claimed":met?"ready":"locked";
+    let action;
+    if(done) action=`<div class="rwd-code"><span class="rwd-code-lbl">${t("rw_code")}</span><code>${esc(c[r.id].code)}</code><button class="rwd-copy" onclick="copyCode('${esc(c[r.id].code)}',this)">${t("rw_copy")}</button></div>`;
+    else if(met) action=`<button class="rwd-claim" onclick="claimReward('${r.id}',this)">${svg("i-gift","icon sm")}${t("rw_claim")}</button>`;
+    else action=`<div class="rwd-prog"><div class="rwd-bar"><i style="width:${Math.round(p.cur/p.max*100)}%"></i></div><span class="rwd-need">${reqLabelC(r)} · ${p.cur}/${p.max}</span></div>`;
+    return `<div class="rwd-card ${state}">
+      <div class="rwd-top">
+        <span class="rwd-ic">${r.icon}</span>
+        <span class="rwd-flag">${done?svg("i-check","icon sm")+t("rw_claimed"):met?"✦ "+t("rw_earned"):"🔒 "+reqLabelC(r)}</span>
+      </div>
+      <div class="rwd-t">${t("rwd_"+r.id+"_t")}</div>
+      <div class="rwd-d">${t("rwd_"+r.id+"_d")}</div>
+      <div class="rwd-foot">${action}</div>
+    </div>`;
+  }).join("");
+
+  const badges=ACH.map(a=>{
+    const p=a.prog(s), earned=p.cur>=p.max;
+    return `<div class="ach-card ${earned?"got":""}">
+      <div class="ach-medal"><span class="ach-ic">${a.icon}</span>${earned?`<i class="ach-check">${svg("i-check","icon sm")}</i>`:""}</div>
+      <div class="ach-t">${t("ach_"+a.id+"_t")}</div>
+      <div class="ach-d">${t("ach_"+a.id+"_d")}</div>
+      ${earned?`<div class="ach-badge-earned">${t("rw_earned")}</div>`:`<div class="ach-prog"><div class="ach-bar"><i style="width:${Math.round(p.cur/p.max*100)}%"></i></div><span>${p.cur}/${p.max}</span></div>`}
+    </div>`;
+  }).join("");
+
+  document.getElementById("rewardsBody").innerHTML=`
+    <section class="rw-hero">
+      <div class="rw-hero-guilloche" aria-hidden="true"></div>
+      <span class="rw-hero-eyebrow">${svg("i-gift","icon sm")}${t("rw_eyebrow")}</span>
+      <h2 class="rw-hero-title">${esc(t("rw_title")).replace(/\n/g,"<br>")}</h2>
+      <p class="rw-hero-sub">${t("rw_sub")}</p>
+      <div class="rw-hero-stats">
+        <div class="rw-hs"><b>${s.n}</b><span>${t("rw_stat_stamps")}</span></div>
+        <div class="rw-hs"><b>${achDone}<i>/${ACH.length}</i></b><span>${t("rw_stat_ach")}</span></div>
+        <div class="rw-hs${ready?" hot":""}"><b>${ready}</b><span>${t("rw_stat_ready")}</span></div>
+      </div>
+    </section>
+
+    <div class="rw-sec-head"><div><h3>${svg("i-gift","icon sm")}${t("rw_redeem_h")}</h3><p>${t("rw_redeem_sub")}</p></div></div>
+    <div class="rwd-grid">${redeem}</div>
+
+    <div class="rw-sec-head"><div><h3>${svg("i-medal","icon sm")}${t("rw_ach_h")}</h3><p>${t("rw_ach_sub")}</p></div><span class="rw-sec-count">${t("rw_ach_count").replace("{a}",achDone).replace("{b}",ACH.length)}</span></div>
+    <div class="ach-grid">${badges}</div>`;
+}
+
+async function claimReward(id,btn){
+  if(btn){ btn.disabled=true; btn.textContent=t("rw_claiming"); }
+  try{
+    const d=await api("/rewards/claim",{method:"POST",body:JSON.stringify({rewardId:id})});
+    if(d&&d.claims){ ME=Object.assign(ME||{},{claims:d.claims}); }
+    toast(t("rw_claim_toast"));
+    renderRewards();
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent=t("rw_claim"); }
+    toast(t("rw_locked_hint"));
+  }
+}
+function copyCode(code,btn){
+  try{ navigator.clipboard.writeText(code); }catch(e){}
+  if(btn){ const o=btn.textContent; btn.textContent=t("rw_copied"); setTimeout(()=>{btn.textContent=o;},1400); }
 }
 
 /* ================= RANK ================= */

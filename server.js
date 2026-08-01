@@ -482,7 +482,34 @@ function userStamps(userId) {
   return DB.checkins.filter(c => c.userId === userId).map(c => c.festivalId);
 }
 function publicUser(u) {
-  return { id: u.id, email: u.email, name: u.name, avatar: u.avatar, stamps: userStamps(u.id) };
+  return { id: u.id, email: u.email, name: u.name, avatar: u.avatar,
+    stamps: userStamps(u.id), claims: u.claims || {} };
+}
+
+/* ---------------- rewards (교환소) ----------------
+ * Claimable perks. `req` uses server-verifiable primitives so a claim can never
+ * be forged from the client: stamps (total), green (sustainable-festival stamps),
+ * or {cat,n} (stamps in a category). Must mirror REWARDS_C in public/app.js. */
+const REWARDS = [
+  { id: "seedling", req: { stamps: 1 } },
+  { id: "cafe",     req: { stamps: 3 } },
+  { id: "draw",     req: { stamps: 5 } },
+  { id: "ecobadge", req: { green: 3 } },
+  { id: "priority", req: { stamps: 5 } },
+  { id: "tree",     req: { green: 5 } },
+];
+function rewardMet(u, r) {
+  const ids = userStamps(u.id), q = r.req;
+  if (q.stamps && ids.length < q.stamps) return false;
+  if (q.green) {
+    const green = new Set(allFestivals().filter(f => f.green).map(f => f.id));
+    if (ids.filter(id => green.has(id)).length < q.green) return false;
+  }
+  if (q.cat) {
+    const inCat = new Set(allFestivals().filter(f => f.cat === q.cat).map(f => f.id));
+    if (ids.filter(id => inCat.has(id)).length < q.n) return false;
+  }
+  return true;
 }
 
 /* ---------------- http ---------------- */
@@ -739,6 +766,21 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     DB.reviews.unshift(rev);
     saveDB();
     return send(res, 200, { review: rev, festival: festivalPublic(allFestivals().find(f => f.id === fid)) });
+  }
+
+  /* ---- claim a reward (교환소) ---- */
+  if (url === "/api/rewards/claim" && req.method === "POST") {
+    const u = sessionUser(req);
+    if (!u) return send(res, 401, { error: "unauthorized" });
+    const r = REWARDS.find(x => x.id === body.rewardId);
+    if (!r) return send(res, 404, { error: "unknown_reward" });
+    if (!u.claims) u.claims = {};
+    if (u.claims[r.id]) return send(res, 200, { claim: u.claims[r.id], claims: u.claims }); // idempotent
+    if (!rewardMet(u, r)) return send(res, 422, { error: "locked" });
+    const code = "JF-" + r.id.slice(0, 3).toUpperCase() + "-" + crypto.randomBytes(3).toString("hex").toUpperCase();
+    u.claims[r.id] = { code, at: Date.now() };
+    saveDB();
+    return send(res, 200, { claim: u.claims[r.id], claims: u.claims });
   }
 
   /* ---- leaderboard (monthly season; resets on the 1st) ---- */

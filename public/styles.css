@@ -55,8 +55,8 @@ header.topbar{position:sticky;top:0;z-index:60;padding:14px 0;background:linear-
 .logo .mk{width:34px;height:34px;border-radius:11px;overflow:hidden;flex:0 0 auto;display:block;box-shadow:0 3px 8px rgba(16,18,17,.22)}
 .logo .mk svg{width:100%;height:100%;display:block}
 .logo .wordmark{letter-spacing:-.02em}
-.navlinks{display:flex;gap:4px;margin-left:8px}
-.navlinks button{padding:9px 15px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--ink-2);transition:var(--dur) var(--ease)}
+.navlinks{display:flex;gap:2px;margin-left:6px}
+.navlinks button{padding:9px 13px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--ink-2);white-space:nowrap;transition:var(--dur) var(--ease)}
 .navlinks button:hover{background:var(--card-2)}
 .navlinks button.on{background:var(--ink);color:#fff}
 .navgrow{flex:1}
@@ -66,6 +66,8 @@ header.topbar{position:sticky;top:0;z-index:60;padding:14px 0;background:linear-
 .lang button{padding:6px 11px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted)}
 .lang button.on{background:var(--ink);color:#fff}
 .menubtn{display:none}
+/* 7 nav items need room — below this width use the dropdown menu instead of cramming */
+@media (max-width:860px){.navlinks{display:none}.menubtn{display:grid}}
 .navright{position:relative}
 .navdrop{position:absolute;right:0;top:calc(100% + 12px);background:var(--card);border:1px solid var(--line);
   border-radius:16px;box-shadow:var(--sh-md);padding:8px;min-width:172px;display:none;flex-direction:column;gap:2px;z-index:70}
@@ -1425,4 +1427,119 @@ body.introlock{overflow:hidden}
 @media (max-width:520px){
   .tk-ringrow{gap:14px}
   .tk-ring,.tk-ring svg{width:76px;height:76px}
+}
+
+/* ============ REWARDS + ACHIEVEMENTS PAGE ============ */
+.rw-hero{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:40px 34px 34px;color:#fff;margin-top:8px;
+  background:linear-gradient(150deg,#242520,#161712);border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 34px 64px -34px rgba(0,0,0,.75),0 4px 14px rgba(0,0,0,.2)}
+.rw-hero-guilloche{position:absolute;inset:0;pointer-events:none;opacity:.6;
+  background:repeating-radial-gradient(circle at 88% 8%,rgba(222,242,78,.08) 0 1px,transparent 1px 11px),
+    repeating-radial-gradient(circle at 6% 96%,rgba(222,242,78,.05) 0 1px,transparent 1px 13px),
+    repeating-linear-gradient(122deg,rgba(255,255,255,.03) 0 1px,transparent 1px 10px)}
+.rw-hero-eyebrow{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--lime)}
+.rw-hero-eyebrow .icon{width:14px;height:14px}
+.rw-hero-title{position:relative;font-family:var(--display);font-weight:700;letter-spacing:-.02em;line-height:1.06;
+  font-size:38px;margin:16px 0 12px}
+.rw-hero-sub{position:relative;color:rgba(255,255,255,.66);font-size:14.5px;line-height:1.55;max-width:520px;margin:0}
+.rw-hero-stats{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px}
+.rw-hs{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-md);
+  padding:16px 12px;text-align:center;transition:var(--dur) var(--ease)}
+.rw-hs b{display:block;font-family:var(--display);font-weight:800;font-size:30px;line-height:1;color:#fff}
+.rw-hs b i{font-style:normal;font-size:16px;color:rgba(255,255,255,.4);font-weight:700}
+.rw-hs span{display:block;margin-top:7px;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.02em}
+.rw-hs.hot{background:var(--lime);border-color:var(--lime)}
+.rw-hs.hot b{color:var(--lime-ink)}
+.rw-hs.hot span{color:#4a5417}
+
+.rw-sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:46px 0 20px}
+.rw-sec-head h3{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:23px;font-weight:700;letter-spacing:-.01em}
+.rw-sec-head h3 .icon{width:19px;height:19px;color:var(--green)}
+.rw-sec-head p{margin:5px 0 0;color:var(--muted);font-size:13.5px}
+.rw-sec-count{flex:0 0 auto;font-size:12.5px;font-weight:800;color:var(--lime-ink);background:var(--lime);
+  padding:7px 13px;border-radius:999px}
+
+/* redeem cards */
+.rwd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.rwd-card{position:relative;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:18px 18px 16px;transition:var(--dur) var(--ease)}
+.rwd-card.locked{background:var(--card-2);opacity:.92}
+.rwd-card.ready{border-color:#c6d94a;box-shadow:0 0 0 1px #dfef7a,0 18px 34px -24px rgba(150,175,40,.8)}
+.rwd-card.claimed{border-color:var(--green);background:linear-gradient(180deg,#f3fbf6,var(--card))}
+.rwd-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.rwd-ic{font-size:34px;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+.rwd-card.locked .rwd-ic{filter:grayscale(.85);opacity:.5}
+.rwd-flag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:.02em;
+  padding:5px 10px;border-radius:999px;background:var(--card-2);color:var(--muted);white-space:nowrap}
+.rwd-flag .icon{width:12px;height:12px}
+.rwd-card.ready .rwd-flag{background:var(--lime);color:var(--lime-ink)}
+.rwd-card.claimed .rwd-flag{background:#e2f4ea;color:var(--green)}
+.rwd-t{font-family:var(--display);font-weight:700;font-size:16.5px;letter-spacing:-.01em;line-height:1.2}
+.rwd-d{margin-top:6px;color:var(--ink-2);font-size:13px;line-height:1.5}
+.rwd-foot{margin-top:auto;padding-top:15px}
+.rwd-claim{display:inline-flex;align-items:center;gap:7px;width:100%;justify-content:center;padding:11px 16px;
+  border-radius:12px;background:var(--ink);color:var(--lime);font-family:var(--display);font-weight:700;font-size:14px;
+  transition:var(--dur) var(--ease)}
+.rwd-claim .icon{width:15px;height:15px}
+.rwd-claim:hover{background:#000;transform:translateY(-1px)}
+.rwd-claim:disabled{opacity:.6;cursor:default;transform:none}
+.rwd-prog{display:flex;flex-direction:column;gap:8px}
+.rwd-bar{height:7px;border-radius:999px;background:var(--line);overflow:hidden}
+.rwd-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--lime-d),var(--lime))}
+.rwd-need{font-size:11.5px;font-weight:700;color:var(--muted)}
+.rwd-code{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#eef8f1;border:1px dashed #9bd3b3;
+  border-radius:12px;padding:9px 11px}
+.rwd-code-lbl{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.rwd-code code{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.04em;color:var(--ink);flex:1 1 auto}
+.rwd-copy{flex:0 0 auto;padding:5px 11px;border-radius:999px;background:var(--green);color:#fff;font-size:11.5px;font-weight:700;
+  transition:var(--dur) var(--ease)}
+.rwd-copy:hover{filter:brightness(1.08)}
+
+/* achievement badges */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}
+.ach-card{display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r-md);padding:20px 14px 16px;transition:var(--dur) var(--ease)}
+.ach-card:not(.got){background:var(--card-2)}
+.ach-card.got{border-color:#c6d94a;box-shadow:0 14px 30px -24px rgba(150,175,40,.9)}
+.ach-card.got:hover{transform:translateY(-3px)}
+.ach-medal{position:relative;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin-bottom:12px;
+  background:radial-gradient(circle at 50% 35%,#fffdf3,#eee7cf);box-shadow:inset 0 0 0 2px rgba(0,0,0,.05)}
+.ach-card.got .ach-medal{background:radial-gradient(circle at 50% 32%,#f6ffcf,var(--lime));
+  box-shadow:0 0 0 4px rgba(222,242,78,.35),inset 0 -3px 8px rgba(150,175,40,.4)}
+.ach-ic{font-size:32px;line-height:1}
+.ach-card:not(.got) .ach-ic{filter:grayscale(.9);opacity:.45}
+.ach-check{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--green);
+  color:#fff;display:grid;place-items:center;border:2.5px solid var(--card)}
+.ach-check .icon{width:13px;height:13px}
+.ach-t{font-family:var(--display);font-weight:700;font-size:14.5px;letter-spacing:-.01em}
+.ach-card:not(.got) .ach-t{color:var(--ink-2)}
+.ach-d{margin-top:5px;font-size:11.5px;color:var(--muted);line-height:1.45}
+.ach-badge-earned{margin-top:11px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--lime-ink);background:var(--lime);padding:5px 12px;border-radius:999px}
+.ach-prog{margin-top:11px;width:100%;display:flex;align-items:center;gap:8px}
+.ach-bar{flex:1 1 auto;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.ach-bar i{display:block;height:100%;border-radius:999px;background:var(--muted)}
+.ach-prog span{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted)}
+
+/* My-page teaser → rewards page */
+.rw-teaser{display:flex;align-items:center;gap:14px;width:100%;text-align:left;margin-top:14px;padding:16px 18px;
+  border-radius:var(--r-md);background:linear-gradient(150deg,#242520,#161712);border:1px solid rgba(255,255,255,.08);
+  color:#fff;transition:var(--dur) var(--ease)}
+.rw-teaser:hover{transform:translateY(-2px);box-shadow:0 20px 40px -26px rgba(0,0,0,.7)}
+.rw-teaser-ic{font-size:30px;line-height:1;flex:0 0 auto}
+.rw-teaser-main{flex:1 1 auto;min-width:0}
+.rw-teaser-h{font-family:var(--display);font-weight:700;font-size:16px;color:#fff}
+.rw-teaser-sub{margin-top:3px;font-size:12.5px;color:rgba(255,255,255,.55);font-weight:600}
+.rw-teaser-dot{flex:0 0 auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--lime);
+  color:var(--lime-ink);font-size:12px;font-weight:800;display:grid;place-items:center}
+.rw-teaser>.icon{flex:0 0 auto;width:20px;height:20px;color:var(--lime)}
+
+@media(max-width:640px){
+  .rw-hero{padding:30px 22px 26px}
+  .rw-hero-title{font-size:29px}
+  .rw-hero-stats{gap:9px}
+  .rw-hs b{font-size:24px}
+  .rw-sec-head h3{font-size:20px}
+  .ach-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
 }

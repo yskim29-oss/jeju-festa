@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#DEF24E">
 <title>제주 축제 도장 · Jeju Festa</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 
@@ -155,6 +155,7 @@
           <button data-nav="map" data-t="nav_map"></button>
           <button data-nav="search" data-t="nav_search"></button>
           <button data-nav="my" data-t="nav_my"></button>
+          <button data-nav="rewards" data-t="nav_rewards"></button>
           <button data-nav="rank" data-t="nav_rank"></button>
           <button data-nav="faq" data-t="nav_faq"></button>
         </div>
@@ -171,6 +172,7 @@
             <button data-nav="map" onclick="navPick('map')" data-t="nav_map"></button>
             <button data-nav="search" onclick="navPick('search')" data-t="nav_search"></button>
             <button data-nav="my" onclick="navPick('my')" data-t="nav_my"></button>
+            <button data-nav="rewards" onclick="navPick('rewards')" data-t="nav_rewards"></button>
             <button data-nav="rank" onclick="navPick('rank')" data-t="nav_rank"></button>
             <button data-nav="faq" onclick="navPick('faq')" data-t="nav_faq"></button>
           </div>
@@ -356,6 +358,11 @@
       <div id="myBody"></div>
     </section>
 
+    <!-- ===== REWARDS + ACHIEVEMENTS ===== -->
+    <section id="v-rewards" class="view">
+      <div id="rewardsBody"></div>
+    </section>
+
     <!-- ===== RANK ===== -->
     <section id="v-rank" class="view">
       <div class="sec-head"><h2 data-t="rank_title"></h2><p data-t="rank_sub"></p></div>
@@ -396,6 +403,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
