@@ -537,6 +537,199 @@ function readBody(req) {
     req.on("error", () => resolve({}));
   });
 }
+/* ============================================================
+ * SEO: server-rendered festival pages, sitemap, and crawlable
+ * homepage directory. A SPA gives crawlers almost no text, so we
+ * render real HTML for each festival and inject a directory + FAQ
+ * into index.html at serve time.
+ * ========================================================== */
+const SITE = "https://www.jejufesta.online";
+function escHtml(s){ return String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+const CAT_LABEL = {
+  tradition: { ko: "전통문화", en: "Tradition" }, agri: { ko: "농·수산 로컬푸드", en: "Farm & Sea" },
+  eco: { ko: "친환경·생태", en: "Eco" }, leisure: { ko: "레저·문화", en: "Leisure" } };
+function fmtDateKo(s){ if (!s) return ""; const [y, m, d] = s.split("-").map(Number); return `${y}년 ${m}월 ${d}일`; }
+function metaDescFrom(text){ const t = String(text || "").replace(/\s+/g, " ").trim(); return t.length > 155 ? t.slice(0, 154) + "…" : t; }
+function sendHtml(res, html, code = 200){
+  res.writeHead(code, { "Content-Type": "text/html; charset=utf-8", ...SEC_HEADERS });
+  res.end(html);
+}
+
+/* SEO <head> shared across server-rendered pages */
+function seoHead(o){
+  const img = o.image || `${SITE}/og-image.png`;
+  return `<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#DEF24E">
+<title>${escHtml(o.title)}</title>
+<meta name="description" content="${escHtml(o.desc)}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="${o.url}">
+<meta property="og:type" content="${o.ogType || "website"}">
+<meta property="og:site_name" content="제주 페스타 · Jeju Festa">
+<meta property="og:title" content="${escHtml(o.title)}">
+<meta property="og:description" content="${escHtml(o.desc)}">
+<meta property="og:url" content="${o.url}">
+<meta property="og:image" content="${escHtml(img)}">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(o.title)}">
+<meta name="twitter:description" content="${escHtml(o.desc)}">
+<meta name="twitter:image" content="${escHtml(img)}">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">`;
+}
+
+function festivalPageHTML(f){
+  const p = festivalPublic(f);
+  const nameKo = (p.name && p.name.ko) || "", nameEn = (p.name && p.name.en) || "";
+  const descKo = (p.desc && p.desc.ko) || "";
+  const paras = descKo.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const url = `${SITE}/festival/${f.id}`;
+  const img = p.img || `${SITE}/og-image.png`;
+  const catKo = (CAT_LABEL[f.cat] || { ko: f.cat }).ko;
+  const dates = f.start === f.end ? fmtDateKo(f.start) : `${fmtDateKo(f.start)} – ${fmtDateKo(f.end)}`;
+  const susList = (p.sus && p.sus.ko) || [];
+  const others = allFestivals().filter(x => x.id !== f.id && x.cat === f.cat).slice(0, 3)
+    .concat(allFestivals().filter(x => x.id !== f.id && x.cat !== f.cat).slice(0, 3)).slice(0, 4);
+
+  const ld = {
+    "@context": "https://schema.org", "@type": "Festival",
+    name: nameKo, alternateName: nameEn, startDate: f.start, endDate: f.end,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    description: metaDescFrom(descKo), image: [img], url,
+    location: { "@type": "Place", name: (p.loc && p.loc.ko) || "제주",
+      address: { "@type": "PostalAddress", addressRegion: "제주특별자치도", addressCountry: "KR" },
+      geo: { "@type": "GeoCoordinates", latitude: f.lat, longitude: f.lng } },
+    organizer: { "@type": "Organization", name: "제주 페스타", url: SITE + "/" },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "KRW", availability: "https://schema.org/InStock", url }
+  };
+  const bc = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+    { "@type": "ListItem", position: 1, name: "제주 페스타", item: SITE + "/" },
+    { "@type": "ListItem", position: 2, name: nameKo, item: url } ] };
+
+  return `<!doctype html><html lang="ko"><head>
+${seoHead({ title: `${nameKo} (${nameEn}) · 제주 페스타`, desc: metaDescFrom(paras[0] || descKo), url, image: img, ogType: "article" })}
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${JSON.stringify(bc)}</script>
+<style>
+:root{--lime:#DEF24E;--ink:#101211;--ink2:#3A3D40;--muted:#7d8288;--bg:#ECEBE7;--card:#fff;--line:#e3e2dd;--green:#2F9E62}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:17px;text-decoration:none}
+.brand .mk{width:32px;height:32px;border-radius:10px;overflow:hidden;display:block}
+.appbtn{background:var(--ink);color:var(--lime);padding:9px 16px;border-radius:999px;font-weight:700;font-size:14px;text-decoration:none}
+.hero-img{width:100%;height:340px;object-fit:cover;border-radius:22px;margin-top:6px;background:#ddd}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 10px}
+.chip{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+.chip.green{background:var(--lime);border-color:var(--lime);color:#20260A}
+h1{font-size:38px;line-height:1.15;letter-spacing:-.02em;margin:6px 0 4px}
+.en{color:var(--muted);font-size:18px;font-weight:600;margin-bottom:20px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0 8px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+.fact b{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:3px}
+.fact span{font-size:15px;font-weight:600}
+.body{margin:30px 0}
+.body p{margin:0 0 18px;font-size:16.5px;color:var(--ink2)}
+h2{font-size:22px;margin:34px 0 14px;letter-spacing:-.01em}
+.sus li{margin:0 0 8px 20px}
+.cta{display:block;text-align:center;background:var(--ink);color:var(--lime);padding:16px;border-radius:16px;font-weight:800;font-size:16px;text-decoration:none;margin:28px 0}
+.homepage{display:inline-block;margin-top:4px;color:var(--green);font-weight:700;text-decoration:underline}
+.rel{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rel a{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-decoration:none;font-weight:700}
+.rel a span{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-top:2px}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:28px 0 50px;color:var(--muted);font-size:13.5px}
+footer a{color:var(--green);font-weight:700}
+@media(max-width:560px){h1{font-size:30px}.hero-img{height:230px}.facts,.rel{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="/"><img class="mk" src="/favicon.svg" alt=""><span>제주 페스타</span></a>
+    <a class="appbtn" href="/#festival-${f.id}">앱에서 열기</a>
+  </div>
+  ${p.img ? `<img class="hero-img" src="${escHtml(p.img)}" alt="${escHtml(nameKo)}" loading="eager">` : ""}
+  <div class="chips">
+    <span class="chip">${escHtml(catKo)}</span>
+    ${f.green ? `<span class="chip green">♻ 지속가능 축제</span>` : ""}
+    <span class="chip">⭐ ${p.ratingAvg} / 5</span>
+    <span class="chip">🌱 지속가능 체감도 ${p.susAvg} / 5</span>
+  </div>
+  <h1>${escHtml(nameKo)}</h1>
+  <div class="en">${escHtml(nameEn)}</div>
+  <div class="facts">
+    <div class="fact"><b>기간</b><span>${escHtml(dates)}</span></div>
+    <div class="fact"><b>장소</b><span>${escHtml((p.loc && p.loc.ko) || "제주")}</span></div>
+    <div class="fact"><b>분류</b><span>${escHtml(catKo)}</span></div>
+    <div class="fact"><b>도장 인증</b><span>${escHtml((p.verify && p.verify.ko) || "위치 기반 체크인")}</span></div>
+  </div>
+  <div class="body">${paras.map(x => `<p>${escHtml(x)}</p>`).join("")}</div>
+  ${susList.length ? `<h2>🌱 지속가능 포인트</h2><ul class="sus">${susList.map(s => `<li>${escHtml(s)}</li>`).join("")}</ul>` : ""}
+  ${p.homepage ? `<p style="margin-top:18px"><a class="homepage" href="${escHtml(p.homepage)}" target="_blank" rel="noopener">공식 홈페이지 바로가기 →</a></p>` : ""}
+  <a class="cta" href="/#festival-${f.id}">제주 페스타 앱에서 이 축제 도장 모으기 →</a>
+  <h2>다른 제주 축제도 둘러보기</h2>
+  <div class="rel">${others.map(o => { const op = festivalPublic(o);
+    return `<a href="/festival/${o.id}">${escHtml(op.name.ko)}<span>${escHtml((op.loc && op.loc.ko) || "제주")} · ${escHtml((CAT_LABEL[o.cat] || {}).ko || "")}</span></a>`; }).join("")}</div>
+  <footer>
+    <p><strong>제주 페스타 (Jeju Festa)</strong> — 제주의 지속가능·친환경 축제를 캘린더·지도로 모아 보고 현장에서 도장을 모으는 스탬프 투어.</p>
+    <p style="margin-top:8px"><a href="/">← 제주 페스타 홈으로</a></p>
+  </footer>
+</div>
+</body></html>`;
+}
+
+async function serveFestivalPage(res, id){
+  const f = allFestivals().find(x => x.id === id);
+  if (!f) return sendHtml(res, "<!doctype html><meta charset=utf-8><title>Not found</title><p>축제를 찾을 수 없어요. <a href='/'>홈으로</a></p>", 404);
+  if (f.live) { try { await enrichLive(f); } catch (e) {} }
+  sendHtml(res, festivalPageHTML(f));
+}
+
+/* crawlable festival directory + FAQ injected into index.html's <noscript> */
+const SEO_FAQ = [
+  { q: "제주 페스타는 어떤 서비스인가요?", a: "제주 곳곳의 지속가능·친환경 축제를 캘린더와 지도로 한눈에 모아 보여주고, 축제 현장에서 도장을 모아 리워드를 교환하고 업적 배지를 채우는 무료 스탬프 투어 웹앱이에요. 한국어와 영어를 지원합니다." },
+  { q: "도장은 어떻게 받나요?", a: "축제마다 인증 방법이 달라요 — 위치 인증(GPS), QR 코드, 티켓 사진 중 하나예요. 상세 페이지의 '인증하기' 버튼으로 진행하고, 서로 다른 축제에서 도장 5개를 모으면 제주 지도가 완성돼 보상을 받아요." },
+  { q: "'지속가능 체감도'와 평점은 어떻게 매겨지나요?", a: "둘 다 실제로 축제를 방문해 도장을 받은 방문자들이 1~5점으로 매긴 평균이에요. 평점은 전반적인 만족도, 지속가능 체감도는 다회용기·차 없는 거리·조명 최소화·비건/로컬 마켓·플로깅 같은 친환경 운영이 얼마나 느껴졌는지를 나타내요." },
+  { q: "축제 정보와 날짜는 어디서 오나요?", a: "편집팀이 정리한 제주 지속가능 축제 목록에 한국관광공사 TourAPI의 실시간 축제 데이터를 더해 보여줘요. 정보가 바뀔 수 있으니 방문 전 공식 홈페이지도 함께 확인해 주세요." }
+];
+function seoDirectoryHTML(){
+  const items = allFestivals().map(f => { const p = festivalPublic(f);
+    const dates = f.start === f.end ? fmtDateKo(f.start) : `${fmtDateKo(f.start)} ~ ${fmtDateKo(f.end)}`;
+    return `<li><a href="/festival/${f.id}">${escHtml(p.name.ko)}</a> — ${escHtml((p.loc && p.loc.ko) || "제주")} · ${escHtml(dates)}${f.green ? " · ♻ 지속가능" : ""}</li>`; }).join("");
+  const faq = SEO_FAQ.map(x => `<h3>${escHtml(x.q)}</h3><p>${escHtml(x.a)}</p>`).join("");
+  return `<h1>제주 페스타 · Jeju Festa — 제주 지속가능 축제 스탬프 투어</h1>
+<p>제주 페스타는 제주 곳곳의 지속가능·친환경 축제를 캘린더와 지도로 한눈에 모아 보여주는 무료 웹앱입니다. 축제 현장에서 도장을 모으고, 리워드를 교환하고, 업적 배지를 채워보세요.</p>
+<h2>제주 축제 목록</h2><ul>${items}</ul>
+<h2>자주 묻는 질문</h2>${faq}
+<p><a href="/">제주 페스타 시작하기</a></p>`;
+}
+function faqJsonLd(){
+  return JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage",
+    mainEntity: SEO_FAQ.map(x => ({ "@type": "Question", name: x.q,
+      acceptedAnswer: { "@type": "Answer", text: x.a } })) });
+}
+
+let _indexTpl = null;
+function serveIndex(req, res){
+  try {
+    if (_indexTpl == null) _indexTpl = fs.readFileSync(path.join(PUB, "index.html"), "utf8");
+    const html = _indexTpl
+      .replace("<!--SEO_DIRECTORY-->", seoDirectoryHTML())
+      .replace("<!--SEO_FAQ_LD-->", `<script type="application/ld+json">${faqJsonLd()}</script>`);
+    sendHtml(res, html);
+  } catch (e) { serveStatic(req, res); }
+}
+function serveSitemap(res){
+  const urls = [`${SITE}/`].concat(allFestivals().map(f => `${SITE}/festival/${f.id}`));
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    urls.map(u => `  <url><loc>${u}</loc><changefreq>weekly</changefreq><priority>${u.endsWith("/") ? "1.0" : "0.8"}</priority></url>`).join("\n") +
+    `\n</urlset>\n`;
+  res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", ...SEC_HEADERS });
+  res.end(body);
+}
+
 function serveStatic(req, res) {
   let rel = decodeURIComponent(req.url.split("?")[0]);
   if (rel === "/") rel = "/index.html";
@@ -585,7 +778,15 @@ const SEC_HEADERS = {
 const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
   const url = req.url.split("?")[0];
 
-  if (!url.startsWith("/api/")) return serveStatic(req, res);
+  if (!url.startsWith("/api/")) {
+    if (req.method === "GET") {
+      if (url === "/" || url === "/index.html") return serveIndex(req, res);
+      if (url === "/sitemap.xml") return serveSitemap(res);
+      const fm = url.match(/^\/festival\/(\d+)\/?$/);
+      if (fm) return serveFestivalPage(res, +fm[1]);
+    }
+    return serveStatic(req, res);
+  }
 
   // rate limit before doing any work (incl. body parsing)
   const ip = clientIP(req);

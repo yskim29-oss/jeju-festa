@@ -338,7 +338,9 @@ async function enterApp(){
   document.getElementById("app").classList.remove("hidden");
   const data=await api("/festivals"); FEST=data.festivals;
   pickDefaultMonth();
-  applyStatic(); updateHeader(); go("home");
+  applyStatic(); updateHeader();
+  const deep=(location.hash||"").match(/^#festival-(\d+)$/);   // deep-link from a /festival/<id> SEO page
+  if(deep) openDetail(+deep[1]); else go("home");
   if(!window._festTimer) window._festTimer=setInterval(refreshFestivals, 300000); // live data every 5 min
 }
 async function refreshFestivals(){
