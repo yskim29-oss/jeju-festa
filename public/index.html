@@ -68,7 +68,7 @@
 <!--SEO_FAQ_LD-->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
 <noscript><div style="max-width:760px;margin:0 auto;padding:24px 20px;font-family:sans-serif;line-height:1.7"><!--SEO_DIRECTORY--></div></noscript>
@@ -126,25 +126,7 @@
       <div class="iscroll-hint"><span data-t="intro_scroll"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-caret"/></svg></div>
     </section>
 
-    <section class="ipanel" data-i="1" style="--img:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=70')">
-      <div class="ibg"></div><div class="iscrim"></div>
-      <div class="iwrap">
-        <div class="ikicker" data-t="intro_2_k"></div>
-        <h2 class="ititle" data-t="intro_2_t" data-nl></h2>
-        <p class="isub" data-t="intro_2_s"></p>
-      </div>
-    </section>
-
-    <section class="ipanel" data-i="2" style="--img:url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?auto=format&fit=crop&w=1600&q=70')">
-      <div class="ibg"></div><div class="iscrim"></div>
-      <div class="iwrap">
-        <div class="ikicker" data-t="intro_3_k"></div>
-        <h2 class="ititle ihuge iwarp" data-t="intro_3_t" data-nl></h2>
-        <p class="isub" data-t="intro_3_s"></p>
-      </div>
-    </section>
-
-    <section class="ipanel" data-i="3" style="--img:url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1600&q=70')">
+    <section class="ipanel" data-i="1" style="--img:url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1600&q=70')">
       <div class="ibg"></div><div class="iscrim"></div>
       <div class="iwrap">
         <div class="ikicker" data-t="intro_4_k"></div>
@@ -157,7 +139,7 @@
       </div>
     </section>
 
-    <section class="ipanel ilast" data-i="4" style="--img:url('https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=1600&q=70')">
+    <section class="ipanel ilast" data-i="2" style="--img:url('https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=1600&q=70')">
       <div class="ibg"></div><div class="iscrim"></div>
       <div class="iwrap">
         <h2 class="ititle ihuge iwarp" data-t="intro_5_t" data-nl></h2>
@@ -271,6 +253,8 @@
         </div>
       </div>
 
+      <div id="firstRun"></div>
+
       <div class="homestats" id="homeStats"></div>
 
       <div class="greener">
@@ -344,8 +328,19 @@
         </div>
       </div>
 
+      <div class="suggestcard" onclick="openSubmit()">
+        <div class="sg-ic">📍</div>
+        <div class="sg-main">
+          <span class="sg-eyebrow" data-t="sub_card_eyebrow"></span>
+          <h3 class="sg-title" data-t="sub_card_title"></h3>
+          <p class="sg-sub" data-t="sub_card_sub"></p>
+        </div>
+        <button class="sg-btn" type="button" onclick="event.stopPropagation();openSubmit()"><span data-t="sub_card_btn"></span><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+      </div>
+
       <div class="footer">
         <button class="footlink" onclick="go('faq')" data-t="faq_footer"></button>
+        <button class="footlink" onclick="openSubmit()" data-t="sub_footer"></button>
         <span>©2026 제주 축제 도장 · All rights reserved</span>
       </div>
     </section>
@@ -450,6 +445,7 @@
 <!-- check-in sheet -->
 <div class="sheet" id="checkinSheet" onclick="if(event.target===this)closeCheckin()"><div class="sheet-card" id="sheetCard"></div></div>
 <div class="sheet" id="profileSheet" onclick="if(event.target===this)closeProfile()"><div class="sheet-card" id="profileCard"></div></div>
+<div class="sheet" id="submitSheet" onclick="if(event.target===this)closeSubmit()"><div class="sheet-card" id="submitCard"></div></div>
 <!-- calendar day sheet -->
 <div class="sheet" id="calDaySheet" onclick="if(event.target===this)closeCalDay()"><div class="sheet-card" id="calDayCard"></div></div>
 <!-- toast + stamp modal -->
@@ -466,6 +462,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

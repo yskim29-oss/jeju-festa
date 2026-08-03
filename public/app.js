@@ -71,6 +71,40 @@ const STR = {
   report_btn:{ko:"신고 보내기",en:"Send report"},
   report_sent:{ko:"신고 접수 완료! 감사합니다 🙏",en:"Report sent! Thank you 🙏"},
   report_empty:{ko:"내용을 입력해주세요",en:"Please enter a message"},
+
+  /* ---- first-run guide (0 stamps) ---- */
+  fr_eyebrow:{ko:"여기서 시작하세요",en:"Start here"},
+  fr_title:{ko:"첫 도장을 받아볼까요?",en:"Ready for your first stamp?"},
+  fr_sub:{ko:"곧 열리는 축제에 방문해 인증하면, 나만의 제주 지도가 시작돼요. 도장 5개를 모으면 지도가 완성됩니다.",en:"Check in at an upcoming festival to start your own map of Jeju. Collect 5 stamps to complete it."},
+  fr_next:{ko:"가장 가까운 축제",en:"Next up"},
+  fr_cta:{ko:"이 축제로 첫 도장 받기",en:"Get your first stamp here"},
+  fr_browse:{ko:"다른 축제 둘러보기",en:"Browse all festivals"},
+  fr_steps:{ko:"찾기 → 방문 인증 → 지도 완성",en:"Find → check in → complete the map"},
+
+  /* ---- suggest a festival ---- */
+  sub_footer:{ko:"축제 제보",en:"Suggest a festival"},
+  sub_card_eyebrow:{ko:"축제 제보",en:"Suggest a festival"},
+  sub_card_title:{ko:"찾는 축제가 없나요?",en:"Missing a festival?"},
+  sub_card_sub:{ko:"알고 있는 제주 축제를 알려주세요. 검토 후 지도에 추가할게요.",en:"Tell us about a Jeju festival you know — we'll review it and add it to the map."},
+  sub_card_btn:{ko:"축제 제보하기",en:"Suggest one"},
+  sub_title:{ko:"축제 제보하기",en:"Suggest a festival"},
+  sub_sub:{ko:"제주에서 열리는 축제를 알려주세요. 제출 내용은 검토 후 반영돼요.",en:"Tell us about a festival in Jeju. Submissions are reviewed before they appear."},
+  sub_name:{ko:"축제 이름",en:"Festival name"},
+  sub_name_ph:{ko:"예: 제주 들불축제",en:"e.g. Jeju Fire Festival"},
+  sub_loc:{ko:"장소",en:"Location"},
+  sub_loc_ph:{ko:"예: 새별오름, 제주시 애월읍",en:"e.g. Saebyeol Oreum, Aewol"},
+  sub_date:{ko:"날짜 / 기간",en:"Date / period"},
+  sub_date_ph:{ko:"예: 2026년 3월 중순",en:"e.g. mid-March 2026"},
+  sub_desc:{ko:"설명 (선택)",en:"Description (optional)"},
+  sub_desc_ph:{ko:"어떤 축제인지, 왜 지속가능한지 알려주세요",en:"What it's about, and why it's sustainable"},
+  sub_url:{ko:"홈페이지·링크 (선택)",en:"Homepage / link (optional)"},
+  sub_email:{ko:"회신 이메일 (선택)",en:"Your email (optional)"},
+  sub_email_ph:{ko:"회신 받을 이메일",en:"Email for a reply"},
+  sub_send:{ko:"제보 보내기",en:"Send suggestion"},
+  sub_cancel:{ko:"취소",en:"Cancel"},
+  sub_sent:{ko:"제보 접수 완료! 검토 후 반영할게요 🙏",en:"Suggestion received — we'll review it 🙏"},
+  sub_need_name:{ko:"축제 이름을 입력해주세요",en:"Please enter the festival name"},
+
   cd_ends:{ko:"이번 시즌 마감까지",en:"Season ends in"},
   cd_dday:{ko:"일 남음",en:"days left"},cd_ontrack:{ko:"시즌 진행 중",en:"Season live"},cd_soon:{ko:"🔥 마감 임박",en:"🔥 Ending soon"},cd_last:{ko:"⏳ 오늘 마감",en:"⏳ Ends today"},cd_elapsed:{ko:"경과",en:"elapsed"},
   impact_title:{ko:"우리가 함께 만든 변화",en:"The change we made together"},
@@ -439,6 +473,7 @@ document.addEventListener("keydown",e=>{
   if(document.getElementById("checkinSheet")?.classList.contains("show")) closeCheckin();
   if(document.getElementById("calDaySheet")?.classList.contains("show")) closeCalDay();
   if(document.getElementById("profileSheet")?.classList.contains("show")) closeProfile();
+  if(document.getElementById("submitSheet")?.classList.contains("show")) closeSubmit();
 });
 
 /* ================= FAQ ================= */
@@ -613,7 +648,73 @@ function pickDefaultMonth(){
 function shiftMonth(d){ curMonth+=d; if(curMonth<0){curMonth=11;curYear--;} if(curMonth>11){curMonth=0;curYear++;} renderHome(); }
 
 /* ================= HOME ================= */
-function renderHome(){ buildFilters("catFilters",renderHome); renderInits(); renderPcards(); renderHomeStats(); animateHomeIn(); }
+function renderHome(){ buildFilters("catFilters",renderHome); renderFirstRun(); renderInits(); renderPcards(); renderHomeStats(); animateHomeIn(); }
+/* soonest festival whose run hasn't ended yet (falls back to the earliest by date) */
+function nextUpcoming(){
+  if(!FEST.length) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const withDate=FEST.filter(f=>f.start).map(f=>({f,s:new Date(f.start),e:new Date(f.end||f.start)}));
+  const up=withDate.filter(x=>x.e>=today).sort((a,b)=>a.s-b.s);
+  return (up.length?up:withDate.sort((a,b)=>a.s-b.s))[0]?.f || null;
+}
+/* first-run guide — only while the user has 0 stamps, so new users aren't dropped cold */
+function renderFirstRun(){
+  const el=document.getElementById("firstRun"); if(!el) return;
+  if(stamps().length>0){ el.innerHTML=""; el.hidden=true; return; }
+  el.hidden=false;
+  const f=nextUpcoming();
+  const fcard=f?`<button class="fr-fest" onclick="openDetail(${f.id})" style="--c:${CATCOLOR[f.cat]||'#2F9E62'}">
+      <span class="fr-fest-stamp">${f.stamp||"🎫"}</span>
+      <span class="fr-fest-main"><span class="fr-fest-label">${t("fr_next")}</span><b>${esc(tv(f.name))}</b><span class="fr-fest-meta">${esc(tv(f.loc))} · ${esc(fmtRange(f))}</span></span>
+      ${svg("i-arrow","icon")}
+    </button>`:"";
+  el.innerHTML=`<section class="firstrun">
+    <div class="fr-guilloche" aria-hidden="true"></div>
+    <span class="fr-eyebrow">✦ ${t("fr_eyebrow")}</span>
+    <h2 class="fr-title">${t("fr_title")}</h2>
+    <p class="fr-sub">${t("fr_sub")}</p>
+    ${fcard}
+    <div class="fr-actions">
+      ${f?`<button class="btn btn-lime" onclick="openDetail(${f.id})"><span>${t("fr_cta")}</span>${svg("i-arrow","icon")}</button>`:""}
+      <button class="btn btn-ghost" onclick="go('search')">${t("fr_browse")}</button>
+    </div>
+    <div class="fr-steps">${t("fr_steps")}</div>
+  </section>`;
+}
+/* ---- suggest a festival (사용자 제보) ---- */
+function openSubmit(){
+  const c=document.getElementById("submitCard");
+  c.innerHTML=`
+    <div class="sub-head">
+      <div><h3>${t("sub_title")}</h3><p class="sub-headsub">${t("sub_sub")}</p></div>
+      <button class="sheet-x" aria-label="close" onclick="closeSubmit()">✕</button>
+    </div>
+    <form class="subform" onsubmit="return submitFestival(event,this)">
+      <label class="subf"><span>${t("sub_name")} *</span><input name="name" maxlength="120" required placeholder="${esc(t("sub_name_ph"))}"></label>
+      <label class="subf"><span>${t("sub_loc")}</span><input name="location" maxlength="160" placeholder="${esc(t("sub_loc_ph"))}"></label>
+      <label class="subf"><span>${t("sub_date")}</span><input name="date" maxlength="80" placeholder="${esc(t("sub_date_ph"))}"></label>
+      <label class="subf"><span>${t("sub_desc")}</span><textarea name="description" rows="3" maxlength="1500" placeholder="${esc(t("sub_desc_ph"))}"></textarea></label>
+      <label class="subf"><span>${t("sub_url")}</span><input name="url" type="url" maxlength="300" placeholder="https://"></label>
+      <label class="subf"><span>${t("sub_email")}</span><input name="email" type="email" maxlength="120" placeholder="${esc(t("sub_email_ph"))}"></label>
+      <div class="subf-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeSubmit()">${t("sub_cancel")}</button>
+        <button type="submit" class="btn btn-lime"><span>${t("sub_send")}</span>${svg("i-arrow","icon")}</button>
+      </div>
+    </form>`;
+  document.getElementById("submitSheet").classList.add("show");
+}
+function closeSubmit(){ document.getElementById("submitSheet").classList.remove("show"); }
+async function submitFestival(e,form){
+  e.preventDefault();
+  const fd=new FormData(form);
+  const name=(fd.get("name")||"").toString().trim();
+  if(name.length<2){ toast(t("sub_need_name")); return false; }
+  const body={ name, location:fd.get("location"), date:fd.get("date"),
+    description:fd.get("description"), url:fd.get("url"), email:fd.get("email") };
+  try{ await api("/festivals/submit",{method:"POST",body:JSON.stringify(body)}); closeSubmit(); toast(t("sub_sent")); }
+  catch(err){ toast(t("err_network")); }
+  return false;
+}
 let _impact=null;
 function renderHomeStats(){
   const el=document.getElementById("homeStats"); if(!el) return;

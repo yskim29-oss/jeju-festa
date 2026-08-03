@@ -19,7 +19,7 @@ const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "")
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
 const DB_KEY = "jeju:db";
-const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [], views: 0 });
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [], submissions: [], views: 0 });
 
 /* ---- owner email delivery ---- */
 // Bug reports are stored in the DB and (best-effort) emailed to the owner.
@@ -57,6 +57,11 @@ function notifyReport(message, email) {
   const subject = "제주 축제 도장 · 🐞 버그 신고";
   const text = `새로운 버그 신고가 접수되었습니다.\n\n내용:\n${message}\n\n회신 이메일: ${email || "(미입력)"}\n시간: ${new Date().toISOString()}\n\n— jejufesta.online`;
   return sendOwnerMail(subject, text, email || undefined);
+}
+function notifyFestivalSubmission(s) {
+  const subject = "제주 페스타 · 📍 축제 제보";
+  const text = `새로운 축제 제보가 접수되었습니다.\n\n축제명: ${s.name}\n장소: ${s.location || "(미입력)"}\n날짜: ${s.date || "(미입력)"}\n링크: ${s.url || "(미입력)"}\n\n설명:\n${s.description || "(미입력)"}\n\n회신 이메일: ${s.email || "(미입력)"}\n시간: ${new Date().toISOString()}\n\n— jejufesta.online`;
+  return sendOwnerMail(subject, text, s.email || undefined);
 }
 
 async function redisGet(key) {
@@ -870,6 +875,26 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     DB.reports.push({ message: message.slice(0, 2000), email, ts: Date.now(), ua: (req.headers["user-agent"] || "").slice(0, 200) });
     saveDB();
     notifyReport(message, email); // best-effort, don't block the response
+    return send(res, 200, { ok: true });
+  }
+
+  /* ---- festival suggestion (사용자·주최자가 축제를 제보) ---- */
+  if (url === "/api/festivals/submit" && req.method === "POST") {
+    const name = (body.name || "").trim();
+    if (name.length < 2) return send(res, 400, { error: "empty_name" });
+    const email = (body.email || "").trim().toLowerCase();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: "invalid_email" });
+    const clip = (s, n) => (s || "").toString().trim().slice(0, n);
+    const sub = {
+      name: clip(name, 120), location: clip(body.location, 160), date: clip(body.date, 80),
+      description: clip(body.description, 1500), url: clip(body.url, 300), email,
+      ts: Date.now(), ua: (req.headers["user-agent"] || "").slice(0, 200)
+    };
+    const u = sessionUser(req); if (u) sub.by = u.id;
+    if (!Array.isArray(DB.submissions)) DB.submissions = [];
+    DB.submissions.push(sub);
+    saveDB();
+    notifyFestivalSubmission(sub); // best-effort
     return send(res, 200, { ok: true });
   }
 

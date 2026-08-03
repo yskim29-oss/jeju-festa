@@ -1553,3 +1553,59 @@ body.introlock{overflow:hidden}
   .rw-sec-head h3{font-size:20px}
   .ach-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
 }
+
+/* ============ FIRST-RUN GUIDE (0 stamps) ============ */
+.firstrun{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:30px 28px;margin:18px 0 8px;color:#fff;
+  background:linear-gradient(150deg,#242520,#161712);border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 30px 60px -34px rgba(0,0,0,.7)}
+.fr-guilloche{position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background:repeating-radial-gradient(circle at 90% 6%,rgba(222,242,78,.08) 0 1px,transparent 1px 11px),
+    repeating-linear-gradient(120deg,rgba(255,255,255,.03) 0 1px,transparent 1px 10px)}
+.fr-eyebrow{position:relative;display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lime)}
+.fr-title{position:relative;font-family:var(--display);font-size:27px;font-weight:800;letter-spacing:-.02em;margin:12px 0 8px}
+.fr-sub{position:relative;color:rgba(255,255,255,.66);font-size:14px;line-height:1.6;max-width:460px;margin:0}
+.fr-fest{position:relative;display:flex;align-items:center;gap:14px;width:100%;text-align:left;margin-top:20px;padding:14px 16px;
+  border-radius:var(--r-md);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;
+  transition:var(--dur) var(--ease)}
+.fr-fest:hover{background:rgba(255,255,255,.13);transform:translateY(-2px)}
+.fr-fest-stamp{flex:0 0 auto;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:26px;
+  background:var(--c,#2F9E62);box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
+.fr-fest-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fr-fest-label{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lime)}
+.fr-fest-main b{font-family:var(--display);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fr-fest-meta{font-size:12.5px;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fr-fest>.icon{flex:0 0 auto;width:20px;height:20px;color:var(--lime)}
+.fr-actions{position:relative;display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.fr-actions .btn-ghost{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff}
+.fr-actions .btn-ghost:hover{background:rgba(255,255,255,.16)}
+.fr-steps{position:relative;margin-top:16px;font-size:12px;font-weight:700;letter-spacing:.02em;color:rgba(255,255,255,.42)}
+
+/* ============ SUGGEST-A-FESTIVAL CARD ============ */
+.suggestcard{display:flex;align-items:center;gap:16px;margin:20px 0 0;padding:20px 22px;border-radius:var(--r-lg);
+  background:var(--card);border:1px solid var(--line);cursor:pointer;transition:var(--dur) var(--ease)}
+.suggestcard:hover{transform:translateY(-2px);box-shadow:0 18px 36px -26px rgba(40,42,32,.5);border-color:#cdd8a6}
+.sg-ic{flex:0 0 auto;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:26px;background:var(--lime)}
+.sg-main{flex:1 1 auto;min-width:0}
+.sg-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.sg-title{font-family:var(--display);font-size:18px;font-weight:700;margin:3px 0 4px}
+.sg-sub{font-size:13px;color:var(--ink-2);line-height:1.5;margin:0}
+.sg-btn{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:11px 17px;border-radius:999px;background:var(--ink);color:#fff;
+  font-weight:700;font-size:14px;transition:var(--dur) var(--ease)}
+.sg-btn .icon{width:15px;height:15px}
+.sg-btn:hover{background:#000;transform:translateX(2px)}
+@media(max-width:640px){.suggestcard{flex-wrap:wrap}.sg-btn{width:100%;justify-content:center}}
+
+/* ============ SUBMIT SHEET FORM ============ */
+.sub-head{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;padding-right:34px}
+.sub-head h3{font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.01em}
+.sub-headsub{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+.subform{display:flex;flex-direction:column;gap:13px}
+.subf{display:flex;flex-direction:column;gap:6px}
+.subf>span{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.subf input,.subf textarea{width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);
+  font:inherit;font-size:14.5px;color:var(--ink);transition:var(--dur) var(--ease)}
+.subf input:focus,.subf textarea:focus{outline:none;border-color:var(--lime-d);background:var(--card);box-shadow:0 0 0 3px rgba(222,242,78,.35)}
+.subf textarea{resize:vertical;min-height:72px}
+.subf-actions{display:flex;gap:10px;margin-top:6px}
+.subf-actions .btn{flex:1 1 auto;justify-content:center}
+.subf-actions .btn-lime{flex:2 1 auto}
