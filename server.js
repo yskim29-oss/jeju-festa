@@ -19,7 +19,7 @@ const REDIS_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "")
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
 const USE_REDIS = !!(REDIS_URL && REDIS_TOKEN);
 const DB_KEY = "jeju:db";
-const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [], submissions: [], views: 0 });
+const emptyDB = () => ({ users: {}, sessions: {}, checkins: [], reviews: [], subscribers: [], reports: [], submissions: [], customFestivals: [], views: 0 });
 
 /* ---- owner email delivery ---- */
 // Bug reports are stored in the DB and (best-effort) emailed to the owner.
@@ -441,7 +441,10 @@ async function refreshLive(){
   }
   console.log("TourAPI: no festivals returned (check key / endpoint)");
 }
-function allFestivals(){ return LIVE.length ? FESTIVALS.concat(LIVE) : FESTIVALS; }
+function allFestivals(){
+  const custom = (DB && Array.isArray(DB.customFestivals)) ? DB.customFestivals : [];
+  return FESTIVALS.concat(LIVE, custom);
+}
 
 /* on-demand detail enrichment for live festivals (real overview + event info) */
 function stripHtml(s){
@@ -735,6 +738,161 @@ function serveSitemap(res){
   res.end(body);
 }
 
+/* ============================================================
+ * Admin (owner-only): review festival submissions and publish
+ * them to the live map. Gated by the ADMIN_KEY env var — if it's
+ * unset, every /api/admin/* route returns 503 and the page is inert.
+ * ========================================================== */
+const ADMIN_KEY = process.env.ADMIN_KEY || "";
+function safeEqual(a, b){
+  const ba = Buffer.from(String(a || "")), bb = Buffer.from(String(b || ""));
+  if (ba.length !== bb.length) return false;
+  try { return crypto.timingSafeEqual(ba, bb); } catch (e) { return false; }
+}
+function isAdmin(req){ return !!ADMIN_KEY && safeEqual(req.headers["x-admin-key"] || "", ADMIN_KEY); }
+function nextCustomId(){
+  const used = new Set(allFestivals().map(f => f.id));
+  let id = 90001; while (used.has(id)) id++; return id;
+}
+/* turn an admin-completed submission into a real festival object (same shape as curated) */
+function buildCustomFestival(b){
+  const s = (v, n) => (v == null ? "" : String(v)).trim().slice(0, n);
+  const nameKo = s(b.name, 120); if (nameKo.length < 2) return null;
+  const lat = Number(b.lat), lng = Number(b.lng);
+  if (!isFinite(lat) || !isFinite(lng)) return null;
+  const dRe = /^\d{4}-\d{2}-\d{2}$/;
+  const start = dRe.test(b.start) ? b.start : "";
+  if (!start) return null;
+  const end = dRe.test(b.end) ? b.end : start;
+  const cat = ["tradition", "agri", "eco", "leisure"].includes(b.cat) ? b.cat : "leisure";
+  const nameEn = s(b.nameEn, 120) || nameKo;
+  const locKo = s(b.location, 160) || "제주";
+  const descKo = s(b.description, 4000) || nameKo;
+  return {
+    id: nextCustomId(), cat, green: !!b.green, lat, lng,
+    rate: Math.max(1, Math.min(5, Number(b.rate) || 4.0)),
+    stamp: s(b.stamp, 4) || "🎫", custom: true, createdAt: Date.now(),
+    name: { ko: nameKo, en: nameEn }, loc: { ko: locKo, en: locKo },
+    start, end,
+    verify: { ko: "위치 기반 체크인", en: "Location check-in" },
+    desc: { ko: descKo, en: descKo }, sus: { ko: [], en: [] }
+  };
+}
+
+function adminPageHTML(){
+  return `<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>제주 페스타 · 관리자</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root{--lime:#DEF24E;--ink:#101211;--card:#fff;--line:#e3e2dd;--muted:#7d8288;--green:#2F9E62;--danger:#E4572E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#14150f;color:#eee;line-height:1.55}
+.wrap{max-width:820px;margin:0 auto;padding:26px 18px 80px}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.hd img{width:34px;height:34px}.hd b{font-size:20px}
+.gate{max-width:360px;margin:12vh auto;text-align:center}
+.gate h1{font-size:22px;margin-bottom:6px}.gate p{color:var(--muted);font-size:14px;margin-bottom:18px}
+input,select,textarea{width:100%;padding:11px 13px;border-radius:11px;border:1px solid #333;background:#1e1f18;color:#fff;font:inherit;font-size:14.5px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--lime)}
+button{font:inherit;cursor:pointer;border:none;border-radius:11px}
+.btn{background:var(--lime);color:#20260A;font-weight:800;padding:12px 18px;width:100%}
+.btn.dark{background:#2a2b22;color:#fff}.btn.sm{width:auto;padding:8px 14px;font-size:13px;font-weight:700}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid #5a2a20}
+.err{color:var(--danger);font-size:13px;min-height:18px;margin-top:8px}
+.count{color:var(--muted);font-size:13px;margin:20px 0 12px;font-weight:700;letter-spacing:.02em}
+.card{background:#1b1c15;border:1px solid #2a2b22;border-radius:16px;padding:18px;margin-bottom:14px}
+.card h3{font-size:17px;margin-bottom:4px}
+.meta{color:var(--muted);font-size:13px;margin-bottom:10px}
+.meta b{color:#bfc4b0}
+.desc{font-size:14px;color:#cfd3c4;white-space:pre-wrap;margin:8px 0;padding:10px 12px;background:#14150f;border-radius:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.grid label{font-size:12px;color:var(--muted);font-weight:700}
+.grid label span{display:block;margin-bottom:4px}
+.full{grid-column:1/-1}
+.chk{display:flex;align-items:center;gap:8px}.chk input{width:auto}
+.addform{margin-top:12px;padding-top:14px;border-top:1px dashed #333;display:none}
+.addform.open{display:block}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+a{color:var(--lime)}
+.pill{display:inline-block;background:#2a2b22;border-radius:999px;padding:3px 10px;font-size:12px;margin:0 6px 6px 0}
+</style></head><body>
+<div class="wrap">
+  <div id="gate" class="gate">
+    <h1>제주 페스타 · 관리자</h1>
+    <p>관리자 키를 입력하세요.</p>
+    <input id="key" type="password" placeholder="ADMIN_KEY" autocomplete="off">
+    <div class="err" id="gateErr"></div>
+    <button class="btn" style="margin-top:12px" onclick="login()">들어가기</button>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="hd"><img src="/favicon.svg" alt=""><b>축제 제보 관리</b></div>
+    <div class="count" id="subCount"></div>
+    <div id="subs"></div>
+    <div class="count" id="cusCount"></div>
+    <div id="customs"></div>
+  </div>
+</div>
+<script>
+const CATS=[["tradition","전통문화"],["agri","농·수산"],["eco","친환경·생태"],["leisure","레저·문화"]];
+let KEY=sessionStorage.getItem("jf_admin")||"";
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+async function api(path,opts){opts=opts||{};opts.headers=Object.assign({"Content-Type":"application/json","x-admin-key":KEY},opts.headers||{});const r=await fetch("/api/admin"+path,opts);if(r.status===401||r.status===503)throw new Error("auth");return r.json();}
+async function login(){const k=document.getElementById("key").value.trim();const e=document.getElementById("gateErr");e.textContent="";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k})});if(!r.ok){e.textContent=r.status===503?"관리자 기능이 비활성화됨 (ADMIN_KEY 미설정)":"키가 올바르지 않아요.";return;}KEY=k;sessionStorage.setItem("jf_admin",k);show();}catch(x){e.textContent="오류가 발생했어요.";}}
+function show(){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";load();}
+async function load(){let d;try{d=await api("/submissions");}catch(x){logout();return;}renderSubs(d.submissions||[]);renderCustoms(d.customs||[]);}
+function logout(){sessionStorage.removeItem("jf_admin");location.reload();}
+function fdate(s){return s?new Date(s).toLocaleString("ko-KR"):"";}
+function renderSubs(list){
+  document.getElementById("subCount").textContent="제보 "+list.length+"건";
+  const el=document.getElementById("subs");
+  if(!list.length){el.innerHTML='<div class="empty">대기 중인 제보가 없어요.</div>';return;}
+  el.innerHTML=list.map((s,i)=>{
+    const catOpts=CATS.map(c=>'<option value="'+c[0]+'">'+c[1]+'</option>').join("");
+    return '<div class="card"><h3>'+esc(s.name)+'</h3>'+
+      '<div class="meta"><b>장소</b> '+esc(s.location||"-")+' · <b>날짜</b> '+esc(s.date||"-")+(s.url?' · <a href="'+esc(s.url)+'" target="_blank" rel="noopener">링크</a>':"")+'</div>'+
+      (s.description?'<div class="desc">'+esc(s.description)+'</div>':"")+
+      '<div class="meta">제보자 '+esc(s.email||"(익명)")+' · '+fdate(s.ts)+'</div>'+
+      '<div class="row"><button class="btn dark sm" onclick="toggleAdd('+i+')">📍 지도에 추가</button>'+
+      '<button class="btn danger sm" onclick="dismiss('+i+')">삭제</button></div>'+
+      '<form class="addform" id="add'+i+'" onsubmit="return addFest(event,'+i+')">'+
+        '<div class="grid">'+
+        '<label class="full"><span>축제 이름 (한글)</span><input name="name" value="'+esc(s.name)+'" required></label>'+
+        '<label class="full"><span>영문 이름 (선택)</span><input name="nameEn"></label>'+
+        '<label class="full"><span>장소</span><input name="location" value="'+esc(s.location||"")+'"></label>'+
+        '<label><span>위도 (lat)</span><input name="lat" placeholder="33.38" required></label>'+
+        '<label><span>경도 (lng)</span><input name="lng" placeholder="126.55" required></label>'+
+        '<label><span>시작일</span><input name="start" type="date" required></label>'+
+        '<label><span>종료일</span><input name="end" type="date"></label>'+
+        '<label><span>분류</span><select name="cat">'+catOpts+'</select></label>'+
+        '<label><span>도장 이모지</span><input name="stamp" placeholder="🎫" maxlength="4"></label>'+
+        '<label class="full chk"><input type="checkbox" name="green"><span>♻ 지속가능(친환경) 축제로 표시</span></label>'+
+        '<label class="full"><span>설명</span><textarea name="description" rows="3">'+esc(s.description||"")+'</textarea></label>'+
+        '</div>'+
+        '<div class="row"><button type="submit" class="btn sm">지도에 추가하고 제보 삭제</button></div>'+
+        '<div class="err" id="ae'+i+'"></div>'+
+      '</form></div>';
+  }).join("");
+}
+function renderCustoms(list){
+  document.getElementById("cusCount").textContent="추가된 축제 "+list.length+"개";
+  const el=document.getElementById("customs");
+  if(!list.length){el.innerHTML='<div class="empty">직접 추가한 축제가 아직 없어요.</div>';return;}
+  el.innerHTML=list.map(f=>'<div class="card"><h3>'+esc(f.name&&f.name.ko||"")+'</h3>'+
+    '<div class="meta">'+esc(f.loc&&f.loc.ko||"")+' · '+esc(f.start||"")+(f.green?' · ♻':"")+' · <a href="/festival/'+f.id+'" target="_blank">/festival/'+f.id+'</a></div>'+
+    '<div class="row"><button class="btn danger sm" onclick="removeFest('+f.id+')">지도에서 제거</button></div></div>').join("");
+}
+function toggleAdd(i){document.getElementById("add"+i).classList.toggle("open");}
+async function dismiss(i){if(!confirm("이 제보를 삭제할까요?"))return;await api("/dismiss",{method:"POST",body:JSON.stringify({index:i})});load();}
+async function addFest(e,i){e.preventDefault();const f=e.target;const b={fromIndex:i,name:f.name.value,nameEn:f.nameEn.value,location:f.location.value,lat:f.lat.value,lng:f.lng.value,start:f.start.value,end:f.end.value,cat:f.cat.value,stamp:f.stamp.value,green:f.green.checked,description:f.description.value};try{const r=await api("/festivals",{method:"POST",body:JSON.stringify(b)});if(!r.ok){document.getElementById("ae"+i).textContent="입력을 확인하세요 (위도·경도·시작일 필수).";return false;}load();}catch(x){document.getElementById("ae"+i).textContent="오류가 발생했어요.";}return false;}
+async function removeFest(id){if(!confirm("지도에서 이 축제를 제거할까요?"))return;await api("/festivals/remove",{method:"POST",body:JSON.stringify({id:id})});load();}
+if(KEY)show();
+</script></body></html>`;
+}
+
 function serveStatic(req, res) {
   let rel = decodeURIComponent(req.url.split("?")[0]);
   if (rel === "/") rel = "/index.html";
@@ -787,6 +945,7 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     if (req.method === "GET") {
       if (url === "/" || url === "/index.html") return serveIndex(req, res);
       if (url === "/sitemap.xml") return serveSitemap(res);
+      if (url === "/admin" || url === "/admin/") return sendHtml(res, adminPageHTML());
       const fm = url.match(/^\/festival\/(\d+)\/?$/);
       if (fm) return serveFestivalPage(res, +fm[1]);
     }
@@ -797,13 +956,44 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
   const ip = clientIP(req);
   let ra = tooMany("g:" + ip, RL_GLOBAL);
   if (!ra) {
-    if (url === "/api/login" || url === "/api/signup" || url === "/api/google") ra = tooMany("a:" + ip, RL_AUTH);
+    if (url === "/api/login" || url === "/api/signup" || url === "/api/google" || url === "/api/admin/login") ra = tooMany("a:" + ip, RL_AUTH);
     else if (req.method === "POST" || req.method === "PUT") ra = tooMany("w:" + ip, RL_WRITE);
   }
   if (ra) return send(res, 429, { error: "rate_limited" }, { "Retry-After": String(ra) });
 
   const body = (req.method === "POST" || req.method === "PUT") ? await readBody(req) : {};
   if (body && body.__toobig) return send(res, 413, { error: "payload_too_large" });
+
+  /* ---- admin (owner-only, gated by ADMIN_KEY env var) ---- */
+  if (url.startsWith("/api/admin/")) {
+    if (!ADMIN_KEY) return send(res, 503, { error: "admin_disabled" });
+    if (url === "/api/admin/login" && req.method === "POST")
+      return send(res, safeEqual(body.key || "", ADMIN_KEY) ? 200 : 401, safeEqual(body.key || "", ADMIN_KEY) ? { ok: true } : { error: "unauthorized" });
+    if (!isAdmin(req)) return send(res, 401, { error: "unauthorized" });
+    if (url === "/api/admin/submissions" && req.method === "GET")
+      return send(res, 200, { submissions: DB.submissions || [],
+        customs: (DB.customFestivals || []).map(f => ({ id: f.id, name: f.name, loc: f.loc, start: f.start, end: f.end, cat: f.cat, green: f.green })) });
+    if (url === "/api/admin/dismiss" && req.method === "POST") {
+      const i = +body.index;
+      if (Array.isArray(DB.submissions) && i >= 0 && i < DB.submissions.length) { DB.submissions.splice(i, 1); saveDB(); return send(res, 200, { ok: true }); }
+      return send(res, 400, { error: "bad_index" });
+    }
+    if (url === "/api/admin/festivals" && req.method === "POST") {
+      const f = buildCustomFestival(body);
+      if (!f) return send(res, 400, { error: "invalid_festival" });
+      if (!Array.isArray(DB.customFestivals)) DB.customFestivals = [];
+      DB.customFestivals.push(f);
+      if (body.fromIndex != null) { const i = +body.fromIndex; if (Array.isArray(DB.submissions) && i >= 0 && i < DB.submissions.length) DB.submissions.splice(i, 1); }
+      saveDB();
+      return send(res, 200, { ok: true, festival: { id: f.id, name: f.name } });
+    }
+    if (url === "/api/admin/festivals/remove" && req.method === "POST") {
+      const id = +body.id;
+      if (Array.isArray(DB.customFestivals)) { const n = DB.customFestivals.length; DB.customFestivals = DB.customFestivals.filter(f => f.id !== id); if (DB.customFestivals.length < n) { saveDB(); return send(res, 200, { ok: true }); } }
+      return send(res, 400, { error: "not_found" });
+    }
+    return send(res, 404, { error: "unknown_admin_route" });
+  }
 
   /* ---- auth ---- */
   if (url === "/api/signup" && req.method === "POST") {
