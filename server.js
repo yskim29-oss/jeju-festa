@@ -816,6 +816,14 @@ button{font:inherit;cursor:pointer;border:none;border-radius:11px}
 .addform{margin-top:12px;padding-top:14px;border-top:1px dashed #333;display:none}
 .addform.open{display:block}
 .empty{color:var(--muted);text-align:center;padding:40px 0}
+.stats{margin-bottom:22px}
+.statrow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stat{background:#1b1c15;border:1px solid #2a2b22;border-radius:14px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:24px;font-weight:800;color:#fff}
+.stat span{font-size:12px;color:var(--muted)}
+.store{margin-top:12px;padding:11px 14px;border-radius:12px;font-size:13.5px;font-weight:700}
+.store.ok{background:#132419;color:#7fe0a6;border:1px solid #22503a}
+.store.warn{background:#2a1712;color:#f0a58f;border:1px solid #5a2a20}
 a{color:var(--lime)}
 .pill{display:inline-block;background:#2a2b22;border-radius:999px;padding:3px 10px;font-size:12px;margin:0 6px 6px 0}
 </style></head><body>
@@ -829,7 +837,8 @@ a{color:var(--lime)}
   </div>
 
   <div id="app" style="display:none">
-    <div class="hd"><img src="/favicon.svg" alt=""><b>축제 제보 관리</b></div>
+    <div class="hd"><img src="/favicon.svg" alt=""><b>제주 페스타 관리</b></div>
+    <div class="stats" id="stats"></div>
     <div class="count" id="subCount"></div>
     <div id="subs"></div>
     <div class="count" id="cusCount"></div>
@@ -843,7 +852,15 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
 async function api(path,opts){opts=opts||{};opts.headers=Object.assign({"Content-Type":"application/json","x-admin-key":KEY},opts.headers||{});const r=await fetch("/api/admin"+path,opts);if(r.status===401||r.status===503)throw new Error("auth");return r.json();}
 async function login(){const k=document.getElementById("key").value.trim();const e=document.getElementById("gateErr");e.textContent="";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k})});if(!r.ok){e.textContent=r.status===503?"관리자 기능이 비활성화됨 (ADMIN_KEY 미설정)":"키가 올바르지 않아요.";return;}KEY=k;sessionStorage.setItem("jf_admin",k);show();}catch(x){e.textContent="오류가 발생했어요.";}}
 function show(){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";load();}
-async function load(){let d;try{d=await api("/submissions");}catch(x){logout();return;}renderSubs(d.submissions||[]);renderCustoms(d.customs||[]);}
+async function load(){let d;try{d=await api("/submissions");}catch(x){logout();return;}renderSubs(d.submissions||[]);renderCustoms(d.customs||[]);try{renderStats(await api("/stats"));}catch(x){}}
+function statTile(l,v){return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>';}
+function renderStats(s){
+  var store=s.storage==='redis'
+    ?'<div class="store ok">저장소: Upstash Redis · 영구 저장 ✓ (재배포해도 데이터 유지)</div>'
+    :'<div class="store warn">⚠ 저장소: 파일 · 재배포 시 초기화됨 — Render에 Upstash 환경변수를 설정하세요</div>';
+  document.getElementById('stats').innerHTML=
+    '<div class="statrow">'+statTile('가입',s.users)+statTile('도장',s.checkins)+statTile('이번 달 활동',s.monthlyActive)+statTile('후기',s.reviews)+statTile('조회수',s.views)+'</div>'+store;
+}
 function logout(){sessionStorage.removeItem("jf_admin");location.reload();}
 function fdate(s){return s?new Date(s).toLocaleString("ko-KR"):"";}
 function renderSubs(list){
@@ -1143,6 +1160,23 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     if (url === "/api/admin/submissions" && req.method === "GET")
       return send(res, 200, { submissions: DB.submissions || [],
         customs: (DB.customFestivals || []).map(f => ({ id: f.id, name: f.name, loc: f.loc, start: f.start, end: f.end, cat: f.cat, green: f.green })) });
+    if (url === "/api/admin/stats" && req.method === "GET") {
+      const now = new Date(), y = now.getFullYear(), mo = now.getMonth();
+      const monthly = new Set();
+      DB.checkins.forEach(c => { const d = new Date(c.at || 0); if (d.getFullYear() === y && d.getMonth() === mo) monthly.add(c.userId); });
+      return send(res, 200, {
+        users: Object.keys(DB.users).length,
+        googleUsers: Object.values(DB.users).filter(u => u.google).length,
+        checkins: DB.checkins.length,
+        activeUsers: new Set(DB.checkins.map(c => c.userId)).size,
+        monthlyActive: monthly.size,
+        reviews: (DB.reviews || []).length,
+        submissions: (DB.submissions || []).length,
+        customs: (DB.customFestivals || []).length,
+        views: DB.views || 0,
+        storage: USE_REDIS ? "redis" : "file"
+      });
+    }
     if (url === "/api/admin/dismiss" && req.method === "POST") {
       const i = +body.index;
       if (Array.isArray(DB.submissions) && i >= 0 && i < DB.submissions.length) { DB.submissions.splice(i, 1); saveDB(); return send(res, 200, { ok: true }); }
