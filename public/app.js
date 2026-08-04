@@ -83,6 +83,9 @@ const STR = {
 
   /* ---- suggest a festival ---- */
   sub_footer:{ko:"축제 제보",en:"Suggest a festival"},
+  legal_privacy:{ko:"개인정보처리방침",en:"Privacy"},
+  legal_terms:{ko:"이용약관",en:"Terms"},
+  legal_agree:{ko:"가입하면 <a href='/terms'>이용약관</a>과 <a href='/privacy'>개인정보처리방침</a>에 동의하는 것으로 간주됩니다.",en:"By signing up you agree to our <a href='/terms'>Terms</a> and <a href='/privacy'>Privacy Policy</a>."},
   sub_card_eyebrow:{ko:"축제 제보",en:"Suggest a festival"},
   sub_card_title:{ko:"찾는 축제가 없나요?",en:"Missing a festival?"},
   sub_card_sub:{ko:"알고 있는 제주 축제를 알려주세요. 검토 후 지도에 추가할게요.",en:"Tell us about a Jeju festival you know — we'll review it and add it to the map."},
@@ -412,6 +415,7 @@ function applyStatic(){
   document.querySelectorAll("[data-tph]").forEach(el=>el.placeholder=t(el.getAttribute("data-tph")));
   const h1=document.getElementById("heroH1"); if(h1) h1.innerHTML=nl2br(t("hero_h1"));
   const si=document.getElementById("searchInput"); if(si) si.placeholder=t("search_ph");
+  const al=document.getElementById("authLegal"); if(al) al.innerHTML=t("legal_agree"); // trusted HTML (contains policy links)
   buildSortSelects();
   if(document.getElementById("app").classList.contains("hidden")) setAuthMode(authMode);
 }

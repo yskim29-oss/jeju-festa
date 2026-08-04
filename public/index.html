@@ -68,7 +68,7 @@
 <!--SEO_FAQ_LD-->
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 <noscript><div style="max-width:760px;margin:0 auto;padding:24px 20px;font-family:sans-serif;line-height:1.7"><!--SEO_DIRECTORY--></div></noscript>
@@ -185,6 +185,7 @@
       <div class="authswitch"><span id="switchTxt"></span> <button id="switchBtn"></button></div>
       <div class="demohint"><span data-t="demo_hint"></span> <button id="demoBtn" data-t="demo_btn"></button></div>
       <div class="demohint" style="margin-top:8px"><button onclick="showIntro()" data-t="intro_replay"></button></div>
+      <p class="authlegal" id="authLegal"></p>
     </div>
   </div>
 </div>
@@ -341,6 +342,8 @@
       <div class="footer">
         <button class="footlink" onclick="go('faq')" data-t="faq_footer"></button>
         <button class="footlink" onclick="openSubmit()" data-t="sub_footer"></button>
+        <a class="footlink" href="/privacy" data-t="legal_privacy"></a>
+        <a class="footlink" href="/terms" data-t="legal_terms"></a>
         <span>©2026 제주 축제 도장 · All rights reserved</span>
       </div>
     </section>
@@ -462,6 +465,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js?v=14"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

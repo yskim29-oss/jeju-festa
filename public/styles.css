@@ -1609,3 +1609,6 @@ body.introlock{overflow:hidden}
 .subf-actions{display:flex;gap:10px;margin-top:6px}
 .subf-actions .btn{flex:1 1 auto;justify-content:center}
 .subf-actions .btn-lime{flex:2 1 auto}
+
+.authlegal{margin-top:16px;font-size:11.5px;line-height:1.5;color:var(--muted);text-align:center}
+.authlegal a{color:var(--ink-2);font-weight:700;text-decoration:underline;text-underline-offset:2px}

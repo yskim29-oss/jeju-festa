@@ -682,7 +682,7 @@ footer a{color:var(--green);font-weight:700}
     return `<a href="/festival/${o.id}">${escHtml(op.name.ko)}<span>${escHtml((op.loc && op.loc.ko) || "제주")} · ${escHtml((CAT_LABEL[o.cat] || {}).ko || "")}</span></a>`; }).join("")}</div>
   <footer>
     <p><strong>제주 페스타 (Jeju Festa)</strong> — 제주의 지속가능·친환경 축제를 캘린더·지도로 모아 보고 현장에서 도장을 모으는 스탬프 투어.</p>
-    <p style="margin-top:8px"><a href="/">← 제주 페스타 홈으로</a></p>
+    <p style="margin-top:8px"><a href="/">← 제주 페스타 홈으로</a> · <a href="/privacy">개인정보처리방침</a> · <a href="/terms">이용약관</a></p>
   </footer>
 </div>
 </body></html>`;
@@ -730,7 +730,7 @@ function serveIndex(req, res){
   } catch (e) { serveStatic(req, res); }
 }
 function serveSitemap(res){
-  const urls = [`${SITE}/`].concat(allFestivals().map(f => `${SITE}/festival/${f.id}`));
+  const urls = [`${SITE}/`, `${SITE}/privacy`, `${SITE}/terms`].concat(allFestivals().map(f => `${SITE}/festival/${f.id}`));
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map(u => `  <url><loc>${u}</loc><changefreq>weekly</changefreq><priority>${u.endsWith("/") ? "1.0" : "0.8"}</priority></url>`).join("\n") +
     `\n</urlset>\n`;
@@ -893,6 +893,174 @@ if(KEY)show();
 </script></body></html>`;
 }
 
+/* ============================================================
+ * Legal pages (privacy / terms) — server-rendered, bilingual,
+ * crawlable, reached from the footer & signup screen (not the nav).
+ * These are reasonable, plain-language policies for this app; the
+ * owner should review/adapt them for their jurisdiction.
+ * ========================================================== */
+const LEGAL_UPDATED = "2026-08-03";
+function legalShell(o){
+  const url = `${SITE}/${o.slug}`;
+  return `<!doctype html><html lang="ko"><head>
+${seoHead({ title: `${o.titleKo} · 제주 페스타`, desc: o.descKo, url, ogType: "article" })}
+<style>
+:root{--lime:#DEF24E;--ink:#101211;--ink2:#3a3d40;--muted:#7d8288;--bg:#ECEBE7;--card:#fff;--line:#e3e2dd;--green:#2F9E62}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0;flex-wrap:wrap;gap:10px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:17px;text-decoration:none;color:inherit}
+.brand img{width:32px;height:32px;border-radius:9px}
+.lang{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.lang button{font:inherit;font-size:12.5px;font-weight:700;border:none;background:none;color:var(--muted);padding:5px 12px;border-radius:999px;cursor:pointer}
+.lang button.on{background:var(--ink);color:#fff}
+h1{font-size:32px;letter-spacing:-.02em;margin:14px 0 4px}
+.upd{color:var(--muted);font-size:13.5px;margin-bottom:8px}
+h2{font-size:19px;margin:30px 0 10px;letter-spacing:-.01em}
+p{margin:0 0 12px;color:var(--ink2);font-size:15.5px}
+ul{margin:0 0 12px 20px}li{margin:0 0 7px;color:var(--ink2);font-size:15.5px}
+a{color:var(--green);font-weight:600}
+.doc{display:none}.doc.on{display:block}
+footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 60px;color:var(--muted);font-size:13.5px}
+footer a{color:var(--green);font-weight:700;margin-right:14px}
+@media(max-width:560px){h1{font-size:26px}}
+</style></head><body>
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="/"><img src="/favicon.svg" alt=""><span>제주 페스타</span></a>
+    <div class="lang"><button id="bko" class="on" onclick="setL('ko')">한국어</button><button id="ben" onclick="setL('en')">English</button></div>
+  </div>
+  <div id="ko" class="doc on">
+    <h1>${o.titleKo}</h1><div class="upd">시행일 · ${LEGAL_UPDATED}</div>
+    ${o.ko}
+  </div>
+  <div id="en" class="doc">
+    <h1>${o.titleEn}</h1><div class="upd">Effective · ${LEGAL_UPDATED}</div>
+    ${o.en}
+  </div>
+  <footer>
+    <a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/">← 홈</a>
+    <div style="margin-top:10px">©2026 제주 페스타 · Jeju Festa</div>
+  </footer>
+</div>
+<script>
+function setL(l){document.getElementById('ko').classList.toggle('on',l==='ko');document.getElementById('en').classList.toggle('on',l==='en');document.getElementById('bko').classList.toggle('on',l==='ko');document.getElementById('ben').classList.toggle('on',l==='en');document.documentElement.lang=l;try{localStorage.setItem('jf_lang',l)}catch(e){}}
+try{if(localStorage.getItem('jf_lang')==='en')setL('en')}catch(e){}
+</script></body></html>`;
+}
+const CONTACT = "yunseongkim@jejufesta.online";
+function privacyPageHTML(){
+  return legalShell({
+    slug: "privacy",
+    titleKo: "개인정보처리방침", titleEn: "Privacy Policy",
+    descKo: "제주 페스타가 수집하는 개인정보와 그 이용·보관 방법을 안내합니다.",
+    ko: `
+    <p>제주 페스타(이하 "서비스")는 이용자의 개인정보를 소중히 다루며, 서비스 제공에 필요한 최소한의 정보만 수집합니다.</p>
+    <h2>1. 수집하는 정보</h2>
+    <ul>
+      <li><b>계정 정보</b> — 이메일, 비밀번호(단방향 해시로만 저장), 닉네임, 프로필 아이콘</li>
+      <li><b>Google 로그인 이용 시</b> — 구글이 제공하는 이메일·이름·고유 식별자</li>
+      <li><b>활동 정보</b> — 방문 인증(도장) 기록(축제 식별자와 시각), 위치 인증 시 현장과의 거리(원본 GPS 좌표는 저장하지 않음), 리뷰(별점·지속가능 체감도·후기)</li>
+      <li><b>제보·문의</b> — 축제 제보 및 버그 리포트에 입력한 내용과 선택 입력한 이메일</li>
+      <li><b>이용 통계</b> — 페이지 방문 수 등 개인을 식별할 수 없는 집계 정보</li>
+    </ul>
+    <h2>2. 이용 목적</h2>
+    <p>로그인 및 계정 관리, 도장·랭킹·리워드 제공, 서비스 개선, 문의·제보 응대를 위해 사용합니다.</p>
+    <h2>3. 보관 및 보호</h2>
+    <p>데이터는 보안 클라우드 저장소에 보관되며, 비밀번호는 원문을 저장하지 않고 scrypt 해시로만 보관합니다.</p>
+    <h2>4. 쿠키·로컬 저장소</h2>
+    <p>로그인 토큰, 언어 설정, 온보딩 표시 여부만 브라우저에 저장합니다. 광고·추적 목적의 제3자 쿠키는 사용하지 않습니다.</p>
+    <h2>5. 제3자 이용</h2>
+    <p>개인정보를 판매하지 않습니다. 축제 정보는 한국관광공사 TourAPI, 지도는 OpenStreetMap/Leaflet, 간편 로그인은 Google을 이용하며, 각 서비스에는 해당 기능에 필요한 정보만 전달됩니다.</p>
+    <h2>6. 이용자의 권리</h2>
+    <p>마이페이지에서 닉네임·아이콘을 직접 수정할 수 있습니다. 계정 및 데이터의 열람·삭제를 원하시면 <a href="mailto:${CONTACT}">${CONTACT}</a> 로 요청해 주세요.</p>
+    <h2>7. 문의</h2>
+    <p>개인정보 관련 문의: <a href="mailto:${CONTACT}">${CONTACT}</a></p>`,
+    en: `
+    <p>Jeju Festa ("the Service") respects your privacy and collects only the minimum information needed to run the Service.</p>
+    <h2>1. Information we collect</h2>
+    <ul>
+      <li><b>Account</b> — email, password (stored only as a one-way hash), nickname, profile icon</li>
+      <li><b>If you use Google Sign-In</b> — the email, name and unique identifier Google provides</li>
+      <li><b>Activity</b> — check-in (stamp) records (festival id and time); for location check-ins, the distance to the venue (we do not store raw GPS coordinates); reviews (rating, sustainability rating, text)</li>
+      <li><b>Suggestions & reports</b> — what you type into a festival suggestion or bug report, and any email you optionally provide</li>
+      <li><b>Usage stats</b> — aggregate, non-identifying figures such as page views</li>
+    </ul>
+    <h2>2. How we use it</h2>
+    <p>For sign-in and account management, to provide stamps/ranking/rewards, to improve the Service, and to respond to reports and suggestions.</p>
+    <h2>3. Storage & protection</h2>
+    <p>Data is kept in secure cloud storage. Passwords are never stored in plain text — only as a scrypt hash.</p>
+    <h2>4. Cookies & local storage</h2>
+    <p>We store only a login token, your language, and whether you've seen the intro. We use no third-party advertising or tracking cookies.</p>
+    <h2>5. Third parties</h2>
+    <p>We do not sell your data. Festival data comes from the Korea Tourism Organization TourAPI, maps from OpenStreetMap/Leaflet, and optional sign-in from Google — each receives only what that feature requires.</p>
+    <h2>6. Your rights</h2>
+    <p>You can edit your nickname and icon in the My page. To access or delete your account and data, email <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>
+    <h2>7. Contact</h2>
+    <p>Privacy questions: <a href="mailto:${CONTACT}">${CONTACT}</a></p>`
+  });
+}
+function termsPageHTML(){
+  return legalShell({
+    slug: "terms",
+    titleKo: "이용약관", titleEn: "Terms of Service",
+    descKo: "제주 페스타 서비스 이용에 관한 약관입니다.",
+    ko: `
+    <p>본 약관은 제주 페스타(이하 "서비스") 이용에 관한 조건을 규정합니다. 서비스를 이용하면 본 약관에 동의한 것으로 봅니다.</p>
+    <h2>1. 서비스 소개</h2>
+    <p>서비스는 제주의 지속가능·친환경 축제 정보를 제공하고, 현장 방문 인증(도장)을 모으는 게이미피케이션 기능을 제공하는 무료 서비스입니다. 정보 제공을 목적으로 하며 각 축제 주최 측과 직접적인 관련이 없을 수 있습니다.</p>
+    <h2>2. 계정</h2>
+    <p>정확한 정보로 가입해 주세요. 계정의 보안 유지 책임은 이용자에게 있습니다.</p>
+    <h2>3. 금지 행위</h2>
+    <ul>
+      <li>방문하지 않은 축제의 도장을 부정하게 취득하는 행위</li>
+      <li>허위·조작된 리뷰 작성, 타인 사칭</li>
+      <li>서비스의 정상적인 운영을 방해하거나 자동화 수단으로 남용하는 행위</li>
+    </ul>
+    <h2>4. 이용자 콘텐츠</h2>
+    <p>리뷰·축제 제보 등 게시물에 대해, 서비스 내 표시·운영에 필요한 범위의 이용 권한을 서비스에 부여합니다. 부적절하거나 정책에 어긋나는 콘텐츠는 사전 통지 없이 수정·삭제될 수 있습니다.</p>
+    <h2>5. 축제 정보의 정확성</h2>
+    <p>축제 정보는 편집팀의 큐레이션과 TourAPI 데이터를 기반으로 하며 변경될 수 있습니다. 방문 전 공식 홈페이지 등에서 최신 정보를 확인해 주세요.</p>
+    <h2>6. 리워드</h2>
+    <p>리워드는 상황에 따라 제공·변경·종료될 수 있습니다. 실제 혜택은 교환 코드와 증빙 확인 후 제공되며, 부정하게 취득한 경우 무효로 처리될 수 있습니다.</p>
+    <h2>7. 책임의 제한</h2>
+    <p>서비스는 "있는 그대로" 제공됩니다. 관련 법이 허용하는 범위에서, 정보의 오류나 서비스 중단으로 발생한 손해에 대해 책임을 지지 않습니다.</p>
+    <h2>8. 약관 변경</h2>
+    <p>약관이 변경되면 본 페이지를 통해 공지합니다.</p>
+    <h2>9. 준거법</h2>
+    <p>본 약관은 대한민국 법률에 따릅니다.</p>
+    <h2>10. 문의</h2>
+    <p><a href="mailto:${CONTACT}">${CONTACT}</a></p>`,
+    en: `
+    <p>These terms govern your use of Jeju Festa ("the Service"). By using the Service, you agree to them.</p>
+    <h2>1. The Service</h2>
+    <p>The Service is a free app that provides information on Jeju's sustainable festivals and lets you collect on-site check-ins (stamps) as a game. It is informational and may not be directly affiliated with any festival organizer.</p>
+    <h2>2. Accounts</h2>
+    <p>Please sign up with accurate information. You are responsible for keeping your account secure.</p>
+    <h2>3. Prohibited conduct</h2>
+    <ul>
+      <li>Fraudulently obtaining stamps for festivals you did not attend</li>
+      <li>Posting fake or manipulated reviews, or impersonating others</li>
+      <li>Disrupting the Service or abusing it via automated means</li>
+    </ul>
+    <h2>4. Your content</h2>
+    <p>For content you post (reviews, festival suggestions), you grant the Service the rights needed to display and operate it. Content that is inappropriate or violates our policies may be edited or removed without notice.</p>
+    <h2>5. Accuracy of festival info</h2>
+    <p>Festival information is based on editorial curation and TourAPI data and may change. Please confirm the latest details (e.g., official sites) before visiting.</p>
+    <h2>6. Rewards</h2>
+    <p>Rewards may be offered, changed, or discontinued at any time. Actual perks are provided after code and proof verification, and fraudulently obtained rewards may be voided.</p>
+    <h2>7. Limitation of liability</h2>
+    <p>The Service is provided "as is." To the extent permitted by law, we are not liable for damages arising from information errors or service interruptions.</p>
+    <h2>8. Changes</h2>
+    <p>If these terms change, we will post the update on this page.</p>
+    <h2>9. Governing law</h2>
+    <p>These terms are governed by the laws of the Republic of Korea.</p>
+    <h2>10. Contact</h2>
+    <p><a href="mailto:${CONTACT}">${CONTACT}</a></p>`
+  });
+}
+
 function serveStatic(req, res) {
   let rel = decodeURIComponent(req.url.split("?")[0]);
   if (rel === "/") rel = "/index.html";
@@ -946,6 +1114,8 @@ const server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
       if (url === "/" || url === "/index.html") return serveIndex(req, res);
       if (url === "/sitemap.xml") return serveSitemap(res);
       if (url === "/admin" || url === "/admin/") return sendHtml(res, adminPageHTML());
+      if (url === "/privacy" || url === "/privacy/") return sendHtml(res, privacyPageHTML());
+      if (url === "/terms" || url === "/terms/") return sendHtml(res, termsPageHTML());
       const fm = url.match(/^\/festival\/(\d+)\/?$/);
       if (fm) return serveFestivalPage(res, +fm[1]);
     }
