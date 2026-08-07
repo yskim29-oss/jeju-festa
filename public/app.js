@@ -39,8 +39,8 @@ const STR = {
   hero_email:{ko:"이메일을 입력하세요",en:"Enter your e-mail"},
   subscribe:{ko:"구독",en:"Subscribe"},
   hero_cta:{ko:"축제 지도 보기",en:"Explore the map"},
-  home_stats_eyebrow:{ko:"지금까지 제주 여행자들과 함께",en:"Together with Jeju travelers so far"},
-  home_stats_sub:{ko:"도장 하나하나가 모여 만든 숫자예요.",en:"Every number here is a stamp someone earned."},
+  home_stats_eyebrow:{ko:"지금까지 함께한 회원",en:"Members with us so far"},
+  home_stats_sub:{ko:"제주 축제를 함께 즐기는 사람들이에요.",en:"People enjoying Jeju's festivals together."},
   home_stats_live:{ko:"실시간 집계",en:"Updated live"},home_stats_ppl:{ko:"명",en:""},
   home_users:{ko:"함께한 여행자",en:"Travelers"},home_visits:{ko:"누적 축제 방문",en:"Festival visits"},
   home_signups:{ko:"가입한 회원",en:"Members joined"},home_views:{ko:"사이트 방문",en:"Site views"},
@@ -729,12 +729,12 @@ function renderHomeStats(){
     el.innerHTML=`<div class="hst">
       <div class="hst-main">
         <span class="hst-over">${t("home_stats_eyebrow")}</span>
-        <div class="hst-big"><b data-cu="u">0</b><i>${lang==="ko"?"명":""}</i></div>
+        <div class="hst-big"><b data-cu="s">0</b><i>${lang==="ko"?"명":""}</i></div>
         <p class="hst-sub">${t("home_stats_sub")}</p>
       </div>
       <div class="hst-perf" aria-hidden="true"></div>
       <div class="hst-stub">
-        ${row("s",t("home_signups"))}
+        ${row("u",t("home_users"))}
         ${row("v",t("home_visits"))}
         ${row("w",t("home_views"))}
         <div class="hst-foot">${t("home_stats_live")}</div>
