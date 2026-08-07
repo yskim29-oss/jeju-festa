@@ -239,13 +239,13 @@ const SEED_REVIEWS = {
 // tiny seeded PRNG so the monthly bot filler is deterministic within a month
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 const SEED_BOTS = [
-  {name:"한라산지기",avatar:"🧗",count:5},
-  {name:"감귤요정",avatar:"🍊",count:4},
-  {name:"바람의섬",avatar:"🏄",count:4},
-  {name:"돌하르방",avatar:"🗿",count:3},
-  {name:"플로깅러",avatar:"🚴",count:2},
-  {name:"올레걷기",avatar:"🥾",count:2},
-  {name:"해녀손녀",avatar:"🌊",count:1}
+  {name:"제주한달살기",avatar:"🏝️",count:5},
+  {name:"오름타는곰",avatar:"🥾",count:4},
+  {name:"지은",avatar:"🍊",count:4},
+  {name:"surfing.yuna",avatar:"🏄",count:3},
+  {name:"현우님",avatar:"🐬",count:2},
+  {name:"바다멍",avatar:"🌊",count:2},
+  {name:"gyulgyul",avatar:"🚴",count:1}
 ];
 
 /* ---------------- helpers ---------------- */
